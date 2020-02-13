@@ -356,13 +356,26 @@ cc.Class({
       this.node.on(cc.Node.EventType.TOUCH_CANCEL, touchEnd, this);
     },
 
+    onTapSave() {
+      const map = this.node.getChildByName("map");
+
+      const func = x => {
+        return {
+          name: x.name,
+          position: x.position,
+          angle: x.angle,
+          children: x.getChildren().map(func),
+        }
+      }
+      const children = map.getChildren().map(func);
+      cc.log(JSON.stringify(children));
+    },
+
     getHitWall(point) {
       const map = this.node.getChildByName("map");
       const children = map.getChildren().filter(x => x.type == Type.WALL);
       for (let i = 0; i < children.length; i++) {
         const box = children[i].getComponent(cc.BoxCollider).world.points;
-        cc.log(point);
-        cc.log(box);
         if (cc.Intersection.pointInPolygon(point, box)) {
           return children[i];
         }
