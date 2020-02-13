@@ -21,6 +21,11 @@ cc.Class({
         default: null,
       },
 
+      enemyPrefab: {
+        type: cc.Prefab,
+        default: null,
+      },
+
       _isTouch: false,
     },
 
@@ -32,9 +37,9 @@ cc.Class({
       return new cc.Vec2(x, y);
     },
 
-    isAlreadyPutObject(point, type) {
+    isAlreadyPutObject(point) {
       const map = this.node.getChildByName("map");
-      const children = map.getChildren().filter(x => x.type == type);
+      const children = map.getChildren().filter(x => x.type == Type.OBJECT);
       for (let i = 0; i < children.length; i++) {
         if (children[i].x == point.x && children[i].y == point.y) {
           return true;
@@ -46,7 +51,7 @@ cc.Class({
     generateFloor(point) {
       const map = this.node.getChildByName("map");
       const discretePoint = this.getNearlyPosition(map.convertToNodeSpace(point), FLOOR_SPAN);
-      if (this.isAlreadyPutObject(discretePoint, Type.OBJECT)) {
+      if (this.isAlreadyPutObject(discretePoint)) {
         return;
       }
 
@@ -87,14 +92,6 @@ cc.Class({
         }
       }
       return null;
-    },
-
-    getWallNearlyPosition(position, span) {
-      const rx = position.x % span;
-      const ry = position.y % span;
-      const x = (Math.trunc(position.x / span) + (rx >= span / 2 ? 1 : (rx < -span / 2 ? -1 : 0))) * span;
-      const y = (Math.trunc(position.y / span) + (ry >= span / 2 ? 1 : (ry < -span / 2 ? -1 : 0))) * span;
-      return cc.v2(x, y);
     },
 
     generateWall(point) {
@@ -154,6 +151,51 @@ cc.Class({
       this.node.on(cc.Node.EventType.TOUCH_CANCEL, touchEnd, this);
     },
 
+    isAlreadyPutEnemy(floor) {
+      const children = floor.getChildren().filter(x => x.type == Type.ENEMY);
+      return children.length > 0;
+    },
+
+    generateEnemy(point) {
+      const map = this.node.getChildByName("map");
+      const pointOnMap = map.convertToNodeSpace(point);
+      const discretePoint = this.getNearlyPosition(pointOnMap, FLOOR_SPAN);
+      const floor = this.getfloor(discretePoint);
+      if (!floor) {
+        return;
+      }
+
+      if (this.isAlreadyPutEnemy(floor)) {
+        return;
+      }
+
+      const enemy = cc.instantiate(this.enemyPrefab);
+      enemy.type = Type.ENEMY;
+      enemy.position = cc.v2(0, 0);
+      floor.addChild(enemy);
+    },
+
+    onTapChangeEnemyMode() {
+      this.node.targetOff(this);
+
+      this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
+        this._isTouch = true;
+        this.generateEnemy(event.getLocation());
+      }, this);
+
+      this.node.on(cc.Node.EventType.TOUCH_MOVE, (event) => {
+        if (this._isTouch) {
+          this.generateEnemy(event.getLocation());
+        }
+      }, this);
+
+      const touchEnd = (event) => {
+        this._isTouch = false;
+      }
+
+      this.node.on(cc.Node.EventType.TOUCH_END, touchEnd, this);
+      this.node.on(cc.Node.EventType.TOUCH_CANCEL, touchEnd, this);
+    },
     // onLoad () {},
 
     start () {
