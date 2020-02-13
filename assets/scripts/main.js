@@ -26,6 +26,11 @@ cc.Class({
         default: null,
       },
 
+      itemPrefab: {
+        type: cc.Prefab,
+        default: null,
+      },
+
       _isTouch: false,
     },
 
@@ -172,6 +177,11 @@ cc.Class({
       const enemy = cc.instantiate(this.enemyPrefab);
       enemy.type = Type.ENEMY;
       enemy.position = cc.v2(0, 0);
+
+      if (this.isAlreadyPutItem(floor)) {
+        enemy.setContentSize(10, 10);
+      }
+      
       floor.addChild(enemy);
     },
 
@@ -186,6 +196,57 @@ cc.Class({
       this.node.on(cc.Node.EventType.TOUCH_MOVE, (event) => {
         if (this._isTouch) {
           this.generateEnemy(event.getLocation());
+        }
+      }, this);
+
+      const touchEnd = (event) => {
+        this._isTouch = false;
+      }
+
+      this.node.on(cc.Node.EventType.TOUCH_END, touchEnd, this);
+      this.node.on(cc.Node.EventType.TOUCH_CANCEL, touchEnd, this);
+    },
+    
+    isAlreadyPutItem(floor) {
+      const children = floor.getChildren().filter(x => x.type == Type.ITEM);
+      return children.length > 0;
+    },
+
+    generateItem(point) {
+      const map = this.node.getChildByName("map");
+      const pointOnMap = map.convertToNodeSpace(point);
+      const discretePoint = this.getNearlyPosition(pointOnMap, FLOOR_SPAN);
+      const floor = this.getfloor(discretePoint);
+      if (!floor) {
+        return;
+      }
+
+      if (this.isAlreadyPutItem(floor)) {
+        return;
+      }
+
+      const item = cc.instantiate(this.itemPrefab);
+      item.type = Type.ITEM;
+      item.position = cc.v2(0, 0);
+
+      if (this.isAlreadyPutEnemy(floor)) {
+        item.setContentSize(10, 10);
+      }
+
+      floor.addChild(item);
+    },
+
+    onTapChangeItemMode() {
+      this.node.targetOff(this);
+
+      this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
+        this._isTouch = true;
+        this.generateItem(event.getLocation());
+      }, this);
+
+      this.node.on(cc.Node.EventType.TOUCH_MOVE, (event) => {
+        if (this._isTouch) {
+          this.generateItem(event.getLocation());
         }
       }, this);
 
