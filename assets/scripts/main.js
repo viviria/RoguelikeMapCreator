@@ -1,8 +1,9 @@
 const Type = cc.Enum({
-  OBJECT: 0,
-  ITEM: 1,
-  ENEMY: 2,
-  STAIRS: 3,
+  FLOOR: 0,
+  WALL: 1,
+  ITEM: 2,
+  ENEMY: 3,
+  STAIRS: 4,
 });
 
 const FLOOR_SPAN = 50;
@@ -48,9 +49,9 @@ cc.Class({
       return new cc.Vec2(x, y);
     },
 
-    isAlreadyPutObject(point) {
+    isAlreadyPutObject(point, type) {
       const map = this.node.getChildByName("map");
-      const children = map.getChildren().filter(x => x.type == Type.OBJECT);
+      const children = map.getChildren().filter(x => x.type == type);
       for (let i = 0; i < children.length; i++) {
         if (children[i].x == point.x && children[i].y == point.y) {
           return true;
@@ -62,12 +63,12 @@ cc.Class({
     generateFloor(point) {
       const map = this.node.getChildByName("map");
       const discretePoint = this.getNearlyPosition(map.convertToNodeSpace(point), FLOOR_SPAN);
-      if (this.isAlreadyPutObject(discretePoint)) {
+      if (this.isAlreadyPutObject(discretePoint, Type.FLOOR)) {
         return;
       }
 
       const floor = cc.instantiate(this.floorPrefab);
-      floor.type = Type.OBJECT;
+      floor.type = Type.FLOOR;
       floor.position = discretePoint;
       map.addChild(floor);
     },
@@ -96,7 +97,7 @@ cc.Class({
 
     getfloor(point) {
       const map = this.node.getChildByName("map");
-      const children = map.getChildren().filter(x => x.type == Type.OBJECT);
+      const children = map.getChildren().filter(x => x.type == Type.FLOOR);
       for (let i = 0; i < children.length; i++) {
         if (children[i].x == point.x && children[i].y == point.y) {
           return children[i];
@@ -114,9 +115,6 @@ cc.Class({
         return;
       }
 
-      const wall = cc.instantiate(this.wallPrefab);
-      wall.type = Type.OBJECT;
-
       const angle = Math.atan2(pointOnMap.x - discretePoint.x, pointOnMap.y - discretePoint.y) * 180 / Math.PI;
       let addPoint = cc.v2(0, 0);
       let rotation = 0;
@@ -125,7 +123,6 @@ cc.Class({
         rotation = 0;
       } else if (angle > 45 && angle <= 135) {
         addPoint = cc.v2(WALL_SPAN, 0);
-        wall.position = discretePoint.add(cc.v2(WALL_SPAN, 0));
         rotation = -90;
       } else if (angle > -135 && angle <= -45) {
         addPoint = cc.v2(-WALL_SPAN, 0);
@@ -135,8 +132,16 @@ cc.Class({
         rotation = 180;
       }
 
-      wall.position = discretePoint.add(addPoint);
-      wall.rotation = rotation;
+      const position = discretePoint.add(addPoint);
+
+      if (this.isAlreadyPutObject(position, Type.WALL)) {
+        return;
+      }
+
+      const wall = cc.instantiate(this.wallPrefab);
+      wall.type = Type.WALL;
+      wall.position = position;
+      wall.angle = rotation;
       map.addChild(wall);
     },
 
