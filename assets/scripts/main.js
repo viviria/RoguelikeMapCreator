@@ -41,6 +41,34 @@ cc.Class({
       _isTouch: false,
     },
 
+    onTapChangeMoveMode() {
+      this.node.targetOff(this);
+
+      let prevPoint = null;
+      const map = this.node.getChildByName("map");
+
+      this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
+        this._isTouch = true;
+        prevPoint = event.getLocation();
+      }, this);
+
+      this.node.on(cc.Node.EventType.TOUCH_MOVE, (event) => {
+        if (this._isTouch && prevPoint) {
+          const nowPoint = event.getLocation();
+          map.position = map.position.add(nowPoint.sub(prevPoint));
+          prevPoint = nowPoint;
+        }
+      }, this);
+
+      const touchEnd = (event) => {
+        this._isTouch = false;
+        prevPoint = null;
+      }
+
+      this.node.on(cc.Node.EventType.TOUCH_END, touchEnd, this);
+      this.node.on(cc.Node.EventType.TOUCH_CANCEL, touchEnd, this);
+    },
+
     getNearlyPosition(position, span) {
       const rx = position.x % span;
       const ry = position.y % span;
