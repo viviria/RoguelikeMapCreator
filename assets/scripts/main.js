@@ -2,6 +2,7 @@ const Type = cc.Enum({
   OBJECT: 0,
   ITEM: 1,
   ENEMY: 2,
+  STAIRS: 3,
 });
 
 const FLOOR_SPAN = 50;
@@ -27,6 +28,11 @@ cc.Class({
       },
 
       itemPrefab: {
+        type: cc.Prefab,
+        default: null,
+      },
+
+      stairsPrefab: {
         type: cc.Prefab,
         default: null,
       },
@@ -170,7 +176,7 @@ cc.Class({
         return;
       }
 
-      if (this.isAlreadyPutEnemy(floor)) {
+      if (this.isAlreadyPutEnemy(floor) || this.isAlreadyPutStairs(floor)) {
         return;
       }
 
@@ -221,7 +227,7 @@ cc.Class({
         return;
       }
 
-      if (this.isAlreadyPutItem(floor)) {
+      if (this.isAlreadyPutItem(floor) || this.isAlreadyPutStairs(floor)) {
         return;
       }
 
@@ -247,6 +253,52 @@ cc.Class({
       this.node.on(cc.Node.EventType.TOUCH_MOVE, (event) => {
         if (this._isTouch) {
           this.generateItem(event.getLocation());
+        }
+      }, this);
+
+      const touchEnd = (event) => {
+        this._isTouch = false;
+      }
+
+      this.node.on(cc.Node.EventType.TOUCH_END, touchEnd, this);
+      this.node.on(cc.Node.EventType.TOUCH_CANCEL, touchEnd, this);
+    },
+
+    isAlreadyPutStairs(floor) {
+      const children = floor.getChildren().filter(x => x.type == Type.STAIRS);
+      return children.length > 0;
+    },
+
+    generateStairs(point) {
+      const map = this.node.getChildByName("map");
+      const pointOnMap = map.convertToNodeSpace(point);
+      const discretePoint = this.getNearlyPosition(pointOnMap, FLOOR_SPAN);
+      const floor = this.getfloor(discretePoint);
+      if (!floor) {
+        return;
+      }
+
+      if (this.isAlreadyPutStairs(floor) || this.isAlreadyPutItem(floor) || this.isAlreadyPutEnemy(floor)) {
+        return;
+      }
+
+      const stairs = cc.instantiate(this.stairsPrefab);
+      stairs.type = Type.STAIRS;
+      stairs.position = cc.v2(0, 0);
+      floor.addChild(stairs);
+    },
+
+    onTapChangeStairsMode() {
+      this.node.targetOff(this);
+
+      this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
+        this._isTouch = true;
+        this.generateStairs(event.getLocation());
+      }, this);
+
+      this.node.on(cc.Node.EventType.TOUCH_MOVE, (event) => {
+        if (this._isTouch) {
+          this.generateStairs(event.getLocation());
         }
       }, this);
 
