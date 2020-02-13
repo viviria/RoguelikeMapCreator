@@ -140,16 +140,9 @@ cc.Class({
       return null;
     },
 
-    generateWall(point) {
-      const map = this.node.getChildByName("map");
-      const pointOnMap = map.convertToNodeSpace(point);
-      const discretePoint = this.getNearlyPosition(pointOnMap, FLOOR_SPAN);
-      const floor = this.getfloor(discretePoint);
-      if (!floor) {
-        return;
-      }
-
+    getWallPositionAndAngle(pointOnMap, discretePoint) {
       const angle = Math.atan2(pointOnMap.x - discretePoint.x, pointOnMap.y - discretePoint.y) * 180 / Math.PI;
+
       let addPoint = cc.v2(0, 0);
       let rotation = 0;
       if (angle > -45 && angle <= 45) {
@@ -166,16 +159,30 @@ cc.Class({
         rotation = 180;
       }
 
-      const position = discretePoint.add(addPoint);
+      return {
+        position: discretePoint.add(addPoint),
+        angle: rotation,
+      }
+    },
 
-      if (this.isAlreadyPutObject(position, Type.WALL)) {
+    generateWall(point) {
+      const map = this.node.getChildByName("map");
+      const pointOnMap = map.convertToNodeSpace(point);
+      const discretePoint = this.getNearlyPosition(pointOnMap, FLOOR_SPAN);
+      const floor = this.getfloor(discretePoint);
+      if (!floor) {
+        return;
+      }
+
+      const positionAndAngle = this.getWallPositionAndAngle(pointOnMap, discretePoint);
+      if (this.isAlreadyPutObject(positionAndAngle.position, Type.WALL)) {
         return;
       }
 
       const wall = cc.instantiate(this.wallPrefab);
       wall.type = Type.WALL;
-      wall.position = position;
-      wall.angle = rotation;
+      wall.position = positionAndAngle.position;
+      wall.angle = positionAndAngle.angle;
       map.addChild(wall);
     },
 
@@ -348,7 +355,54 @@ cc.Class({
       this.node.on(cc.Node.EventType.TOUCH_END, touchEnd, this);
       this.node.on(cc.Node.EventType.TOUCH_CANCEL, touchEnd, this);
     },
-    // onLoad () {},
+
+    getHitWall(point) {
+      const map = this.node.getChildByName("map");
+      const children = map.getChildren().filter(x => x.type == Type.WALL);
+      for (let i = 0; i < children.length; i++) {
+        const box = children[i].getComponent(cc.BoxCollider).world.points;
+        cc.log(point);
+        cc.log(box);
+        if (cc.Intersection.pointInPolygon(point, box)) {
+          return children[i];
+        }
+      }
+      return null;
+    },
+
+    removeObject(point) {
+      const wall = this.getHitWall(point)
+      if (wall) {
+        wall.removeFromParent();
+        return;
+      }
+
+      const map = this.node.getChildByName("map");
+      const pointOnMap = map.convertToNodeSpace(point);
+      const discretePoint = this.getNearlyPosition(pointOnMap, FLOOR_SPAN);
+      const floor = this.getfloor(discretePoint);
+      if (floor) {
+        const children = floor.getChildren().reverse();
+        if (children.length > 0) {
+          children[0].removeFromParent();
+          return;
+        }
+        floor.removeFromParent();
+      }
+    },
+
+    onTapChangeRemoveMode() {
+      this.node.targetOff(this);
+
+      this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
+        this.removeObject(event.getLocation());
+      }, this);
+    },
+
+    onLoad () {
+      const manager = cc.director.getCollisionManager();
+      manager.enabled = true;
+    },
 
     start () {
       this._isTouch = false;
