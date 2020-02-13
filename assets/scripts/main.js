@@ -69,6 +69,12 @@ cc.Class({
       this.node.on(cc.Node.EventType.TOUCH_CANCEL, touchEnd, this);
     },
 
+    onTapMoveReset() {
+      this.node.targetOff(this);
+      const map = this.node.getChildByName("map");
+      map.position = cc.v2(0, 0);
+    },
+
     getNearlyPosition(position, span) {
       const rx = position.x % span;
       const ry = position.y % span;
