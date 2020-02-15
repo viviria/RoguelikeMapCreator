@@ -557,7 +557,7 @@ cc.Class({
     onTapStartOk() {
       const startMenu = this.node.getChildByName("startMenu");
       const editBox = startMenu.getChildByName("editBox").getComponent(cc.EditBox);
-      this._fileName = editBox.string;
+      this._fileName = editBox.string || "map";
 
       if (this._fileName) {
         const data = cc.sys.localStorage.getItem(this._fileName);
@@ -660,6 +660,12 @@ cc.Class({
       this.node.getChildByName("viewBackground").active = false;
       specialView.active = false;
       this._cannotAction = false;
+    },
+
+    onTapRemoveMap() {
+      cc.sys.localStorage.removeItem(this._fileName);
+      const map = this.node.getChildByName("map");
+      map.removeAllChildren();
     },
 
     onLoad () {
