@@ -477,6 +477,33 @@ cc.Class({
       }, this);
     },
 
+    showDetailFloor(point) {
+      const map = this.node.getChildByName("map");
+      const pointOnMap = map.convertToNodeSpace(point);
+      const discretePoint = this.getNearlyPosition(pointOnMap, FLOOR_SPAN);
+      const floor = this.getfloor(discretePoint);
+
+      this.showDetailView(floor);
+    },
+
+    onTapChangeDetailMode() {
+      if (this._isShowDetail) {
+        return;
+      }
+
+      this.node.targetOff(this);
+      this.subUIDisabled();
+      this.setStateLabel("detail");
+
+      this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
+        if (this._isShowDetail) {
+          return;
+        }
+
+        this.showDetailFloor(event.getLocation());
+      }, this);
+    },
+
     save() {
       cc.sys.localStorage.setItem(this._fileName, this.convertJson());
     },
