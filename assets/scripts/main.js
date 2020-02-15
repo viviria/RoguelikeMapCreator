@@ -256,12 +256,6 @@ cc.Class({
         this.generateEnemy(event.getLocation());
       }, this);
 
-      this.node.on(cc.Node.EventType.TOUCH_MOVE, (event) => {
-        if (this._isTouch) {
-          this.generateEnemy(event.getLocation());
-        }
-      }, this);
-
       const touchEnd = (event) => {
         this._isTouch = false;
         this.save();
@@ -309,12 +303,6 @@ cc.Class({
         this.generateItem(event.getLocation());
       }, this);
 
-      this.node.on(cc.Node.EventType.TOUCH_MOVE, (event) => {
-        if (this._isTouch) {
-          this.generateItem(event.getLocation());
-        }
-      }, this);
-
       const touchEnd = (event) => {
         this._isTouch = false;
         this.save();
@@ -353,14 +341,7 @@ cc.Class({
       this.subUIDisabled();
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
-        this._isTouch = true;
         this.generateStairs(event.getLocation());
-      }, this);
-
-      this.node.on(cc.Node.EventType.TOUCH_MOVE, (event) => {
-        if (this._isTouch) {
-          this.generateStairs(event.getLocation());
-        }
       }, this);
 
       const touchEnd = (event) => {
