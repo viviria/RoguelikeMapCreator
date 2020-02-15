@@ -654,6 +654,15 @@ cc.Class({
       this._cannotAction = true;
     },
 
+    onTapCloseSpecialView() {
+      const specialView = this.node.getChildByName("specialView");
+      
+      this.setUIButtonEnabled(true);
+      this.node.getChildByName("viewBackground").active = false;
+      specialView.active = false;
+      this._cannotAction = false;
+    },
+
     onLoad () {
       const manager = cc.director.getCollisionManager();
       manager.enabled = true;
