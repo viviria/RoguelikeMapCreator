@@ -379,7 +379,12 @@ cc.Class({
 
     onTapDownload() {
       this.save();
-      const json = this.convertJson();
+      let json = this.convertJson();
+
+      if (Base64 && RawDeflate) {
+        json = Base64.toBase64(RawDeflate.deflate(Base64.utob(json)));
+        console.log(json);
+      }
 
       const saveWindow = this.node.getChildByName("saveWindow");
       saveWindow.active = true;
