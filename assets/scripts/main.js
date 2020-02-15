@@ -594,7 +594,9 @@ cc.Class({
       }
 
       startMenu.active = false;
-      this.node.getChildByName("ui").active = true;
+      const ui = this.node.getChildByName("ui");
+      ui.active = true;
+      ui.getChildByName("mapNameLabel").getComponent(cc.Label).string = this._fileName;
     },
 
     setUIButtonEnabled(enabled) {
