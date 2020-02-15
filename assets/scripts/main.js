@@ -42,9 +42,14 @@ cc.Class({
       _fileName: "map",
     },
 
+    setStateLabel(state) {
+      this.node.getChildByName("stateLabel").getComponent(cc.Label).string = state;
+    },
+
     onTapChangeMoveMode() {
       this.node.targetOff(this);
       this.subUIDisabled();
+      this.setStateLabel("move");
       
       this.node.getChildByName("positionResetButton").active = true;
 
@@ -116,6 +121,7 @@ cc.Class({
     onTapChangeFloorMode() {
       this.node.targetOff(this);
       this.subUIDisabled();
+      this.setStateLabel("floor");
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
         this._isTouch = true;
@@ -197,6 +203,7 @@ cc.Class({
     onTapChangeWallMode() {
       this.node.targetOff(this);
       this.subUIDisabled();
+      this.setStateLabel("wall");
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
         this._isTouch = true;
@@ -250,6 +257,7 @@ cc.Class({
     onTapChangeEnemyMode() {
       this.node.targetOff(this);
       this.subUIDisabled();
+      this.setStateLabel("enemy");
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
         this._isTouch = true;
@@ -297,6 +305,7 @@ cc.Class({
     onTapChangeItemMode() {
       this.node.targetOff(this);
       this.subUIDisabled();
+      this.setStateLabel("item");
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
         this._isTouch = true;
@@ -339,6 +348,7 @@ cc.Class({
     onTapChangeStairsMode() {
       this.node.targetOff(this);
       this.subUIDisabled();
+      this.setStateLabel("stairs");
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
         this.generateStairs(event.getLocation());
@@ -420,6 +430,7 @@ cc.Class({
     onTapChangeRemoveMode() {
       this.node.targetOff(this);
       this.subUIDisabled();
+      this.setStateLabel("remove");
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
         this.removeObject(event.getLocation());
