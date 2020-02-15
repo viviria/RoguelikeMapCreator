@@ -42,8 +42,14 @@ cc.Class({
         default: null,
       },
 
+      detailPanelPrefab: {
+        type: cc.Prefab,
+        default: null,
+      },
+
       _isTouch: false,
       _fileName: "map",
+      _isShowDetail: false,
     },
 
     setStateLabel(state) {
@@ -51,6 +57,10 @@ cc.Class({
     },
 
     onTapChangeMoveMode() {
+      if (this._isShowDetail) {
+        return;
+      }
+
       this.node.targetOff(this);
       this.subUIDisabled();
       this.setStateLabel("move");
@@ -123,6 +133,10 @@ cc.Class({
     },
 
     onTapChangeFloorMode() {
+      if (this._isShowDetail) {
+        return;
+      }
+
       this.node.targetOff(this);
       this.subUIDisabled();
       this.setStateLabel("floor");
@@ -205,6 +219,10 @@ cc.Class({
     },
 
     onTapChangeWallMode() {
+      if (this._isShowDetail) {
+        return;
+      }
+
       this.node.targetOff(this);
       this.subUIDisabled();
       this.setStateLabel("wall");
@@ -256,25 +274,26 @@ cc.Class({
       }
       
       floor.addChild(enemy);
+      this.showDetailView(floor);
     },
 
     onTapChangeEnemyMode() {
+      if (this._isShowDetail) {
+        return;
+      }
+
       this.node.targetOff(this);
       this.subUIDisabled();
       this.setStateLabel("enemy");
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
+        if (this._isShowDetail) {
+          return;
+        }
+
         this._isTouch = true;
         this.generateEnemy(event.getLocation());
       }, this);
-
-      const touchEnd = (event) => {
-        this._isTouch = false;
-        this.save();
-      }
-
-      this.node.on(cc.Node.EventType.TOUCH_END, touchEnd, this);
-      this.node.on(cc.Node.EventType.TOUCH_CANCEL, touchEnd, this);
     },
     
     isAlreadyPutItem(floor) {
@@ -304,25 +323,24 @@ cc.Class({
       }
 
       floor.addChild(item);
+      this.showDetailView(floor);
     },
 
     onTapChangeItemMode() {
+      if (this._isShowDetail) {
+        return;
+      }
+
       this.node.targetOff(this);
       this.subUIDisabled();
       this.setStateLabel("item");
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
-        this._isTouch = true;
+        if (this._isShowDetail) {
+          return;
+        }
         this.generateItem(event.getLocation());
       }, this);
-
-      const touchEnd = (event) => {
-        this._isTouch = false;
-        this.save();
-      }
-
-      this.node.on(cc.Node.EventType.TOUCH_END, touchEnd, this);
-      this.node.on(cc.Node.EventType.TOUCH_CANCEL, touchEnd, this);
     },
 
     isAlreadyPutStairs(floor) {
@@ -347,30 +365,31 @@ cc.Class({
       stairs.type = Type.STAIRS;
       stairs.position = cc.v2(0, 0);
       floor.addChild(stairs);
+      this.showDetailView(floor);
     },
 
     onTapChangeStairsMode() {
+      if (this._isShowDetail) {
+        return;
+      }
+
       this.node.targetOff(this);
       this.subUIDisabled();
       this.setStateLabel("stairs");
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
+        if (this._isShowDetail) {
+          return;
+        }
         this.generateStairs(event.getLocation());
       }, this);
-
-      const touchEnd = (event) => {
-        this._isTouch = false;
-        this.save();
-      }
-
-      this.node.on(cc.Node.EventType.TOUCH_END, touchEnd, this);
-      this.node.on(cc.Node.EventType.TOUCH_CANCEL, touchEnd, this);
     },
 
     convertJson() {
       const map = this.node.getChildByName("map");
       const func = x => {
         return {
+          id: x.interId,
           type: x.type,
           position: x.position,
           angle: x.angle,
@@ -382,6 +401,10 @@ cc.Class({
     },
 
     onTapDownload() {
+      if (this._isShowDetail) {
+        return;
+      }
+
       this.save();
       let json = this.convertJson();
 
@@ -437,11 +460,19 @@ cc.Class({
     },
 
     onTapChangeRemoveMode() {
+      if (this._isShowDetail) {
+        return;
+      }
+
       this.node.targetOff(this);
       this.subUIDisabled();
       this.setStateLabel("remove");
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
+        if (this._isShowDetail) {
+          return;
+        }
+
         this.removeObject(event.getLocation());
       }, this);
     },
@@ -477,6 +508,7 @@ cc.Class({
       const mapFunc = (data) => {
         const prefab = this.getPrefabByType(data.type);
         const node = cc.instantiate(prefab);
+        node.interId = data.id;
         node.type = data.type;
         node.position = data.position;
         node.angle = data.angle;
@@ -504,6 +536,80 @@ cc.Class({
 
       startMenu.active = false;
       this.node.getChildByName("ui").active = true;
+    },
+
+    setUIButtonEnabled(enabled) {
+      const ui = this.node.getChildByName("ui");
+      const children = ui.getChildren();
+      for (let i = 0; i < children.length; i++) {
+        const button = children[i].getComponent(cc.Button);
+        if (button) {
+          button.interactable = enabled;
+        }
+      }
+    },
+
+    createDetailPanel(node) {
+      const detailPanel = cc.instantiate(this.detailPanelPrefab);
+      
+      const typePrefab = this.getPrefabByType(node.type);
+      const typeNode = cc.instantiate(typePrefab);
+      typeNode.position = cc.v2(0, 0);
+      detailPanel.getChildByName("type").addChild(typeNode);
+      detailPanel.getChildByName("nameLabel").getComponent(cc.Label).string = typePrefab.data.name;
+      detailPanel.targetNode = node;
+
+      const idNode = detailPanel.getChildByName("id");
+      const idEditBox = detailPanel.getChildByName("id").getChildByName("idEditBox");
+      idEditBox.getComponent(cc.EditBox).string = node.interId || -1;
+      idNode.active = node.type != Type.FLOOR;
+
+      return detailPanel;
+    },
+
+    showDetailView(node) {
+      const children = node.getChildren();
+      if (children.length <= 0) {
+        return;
+      }
+
+      this.node.getChildByName("detailViewBackground").active = true;
+      const detailView = this.node.getChildByName("detailView");
+      detailView.active = true;
+      const content = detailView.getComponent(cc.ScrollView).content;
+      content.removeAllChildren();
+
+      let detailPanel = this.createDetailPanel(node);
+      detailPanel.position = cc.v2(0, -20);
+      content.addChild(detailPanel);
+
+      for (let i = 0; i < children.length; i++) {
+        detailPanel = this.createDetailPanel(children[i]);
+        detailPanel.position = cc.v2(0, -i * (detailPanel.height + 10) - 20);
+        content.addChild(detailPanel);
+      }
+
+      this.setUIButtonEnabled(false);
+      this._isShowDetail = true;
+    },
+
+    onTapDetailSave() {
+      const detailView = this.node.getChildByName("detailView");
+      const content = detailView.getComponent(cc.ScrollView).content;
+      const children = content.getChildren();
+
+      for (let i = 0; i < children.length; i++) {
+        const detailPanel = children[i];
+        const idEditBox = detailPanel.getChildByName("id").getChildByName("idEditBox");
+        detailPanel.targetNode.interId = Number(idEditBox.getComponent(cc.EditBox).string);
+      }
+
+      this.save();
+
+      this.setUIButtonEnabled(true);
+      this.node.getChildByName("detailViewBackground").active = false;
+      detailView.active = false;
+      this._isShowDetail = false;
     },
 
     onLoad () {
