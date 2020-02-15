@@ -2602,7 +2602,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "saveButton",
+    "_name": "downloadButton",
     "_objFlags": 0,
     "_parent": {
       "__id__": 8
@@ -2695,7 +2695,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 42.25,
+      "width": 85.63,
       "height": 40
     },
     "_anchorPoint": {
@@ -2742,8 +2742,8 @@
     "_srcBlendFactor": 1,
     "_dstBlendFactor": 771,
     "_useOriginalSize": false,
-    "_string": "save",
-    "_N$string": "save",
+    "_string": "download",
+    "_N$string": "download",
     "_fontSize": 20,
     "_lineHeight": 40,
     "_enableWrapText": false,
