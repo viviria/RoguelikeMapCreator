@@ -71,6 +71,9 @@ cc.Class({
       const map = this.node.getChildByName("map");
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
+        if (this._cannotAction) {
+          return;
+        }
         this._isTouch = true;
         prevPoint = event.getLocation();
       }, this);
@@ -141,6 +144,10 @@ cc.Class({
       this.setStateLabel("floor");
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
+        if (this._cannotAction) {
+          return;
+        }
+
         this._isTouch = true;
         this.generateFloor(event.getLocation());
       }, this);
@@ -227,6 +234,9 @@ cc.Class({
       this.setStateLabel("wall");
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
+        if (this._cannotAction) {
+          return;
+        }
         this._isTouch = true;
         this.generateWall(event.getLocation());
       }, this);
