@@ -380,6 +380,39 @@ cc.Class({
       return JSON.stringify(children);
     },
 
+    getPrefabByName(name, prefabs) {
+      for (let i = 0; i < prefabs.length; i++) {
+        if (name == prefabs[i].data.name) {
+          return prefabs[i];
+        }
+      }
+      return null;
+    },
+    
+    convertMap(json) {
+      const addChildren = (parent, children) => {
+        for (let i = 0; i < children.length; i++) {
+          parent.addChild(children[i]);
+        }
+      };
+
+      const mapFunc = (data) => {
+        const prefab = this.getPrefabByName(data.name, [
+          this.floorPrefab, this.wallPrefab, this.enemyPrefab, this.itemPrefab, this.stairsPrefab
+        ]);
+        const node = cc.instantiate(prefab);
+        node.position = data.position;
+        node.angle = data.angle;
+        const children = data.children.map(mapFunc);
+        addChildren(node, children);
+        return node;
+      };
+
+      const map = this.node.getChildByName("map");
+      const data = JSON.parse(json).map(mapFunc);
+      addChildren(map, data);
+    },
+
     onTapDownload() {
       this.onTapSave();
       const json = this.convertJson();
@@ -449,7 +482,7 @@ cc.Class({
       if (this._fileName) {
         const data = cc.sys.localStorage.getItem(this._fileName);
         if (data) {
-
+          this.convertMap(data);
         }
       }
 
