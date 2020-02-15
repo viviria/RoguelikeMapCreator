@@ -622,7 +622,7 @@ cc.Class({
 
       const idNode = detailPanel.getChildByName("id");
       const idEditBox = detailPanel.getChildByName("id").getChildByName("idEditBox");
-      idEditBox.getComponent(cc.EditBox).string = node.interId || -1;
+      idEditBox.getComponent(cc.EditBox).string = node.interId === undefined ? -1 : node.interId;
       idNode.active = node.type != Type.FLOOR;
 
       return detailPanel;
