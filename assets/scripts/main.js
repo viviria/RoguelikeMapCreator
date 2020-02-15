@@ -492,7 +492,7 @@ cc.Class({
       const floor = this.getfloor(discretePoint);
 
       if (floor) {
-        this.showDetailView(floor);
+        this.showDetailView(floor, false);
       }
     },
 
@@ -628,7 +628,7 @@ cc.Class({
       return detailPanel;
     },
 
-    showDetailView(node) {
+    showDetailView(node, cannotAction = true) {
       const children = node.getChildren();
       if (children.length <= 0) {
         return;
@@ -638,7 +638,6 @@ cc.Class({
       mark.active = true;
       mark.position = node.position.add(node.parent.position);
 
-      this.node.getChildByName("viewBackground").active = true;
       const detailView = this.node.getChildByName("detailView");
       detailView.active = true;
       const content = detailView.getComponent(cc.ScrollView).content;
@@ -654,8 +653,11 @@ cc.Class({
         content.addChild(detailPanel);
       }
 
-      this.setUIButtonEnabled(false);
-      this._cannotAction = true;
+      if (cannotAction) {
+        this.node.getChildByName("viewBackground").active = true;
+        this.setUIButtonEnabled(false);
+        this._cannotAction = true;
+      }
     },
 
     onTapDetailSave() {
@@ -671,11 +673,14 @@ cc.Class({
 
       this.save();
 
-      this.setUIButtonEnabled(true);
-      this.node.getChildByName("viewBackground").active = false;
       detailView.active = false;
-      this._cannotAction = false;
       this.node.getChildByName("mark").active = false;
+
+      if (this._cannotAction) {
+        this._cannotAction = false;
+        this.setUIButtonEnabled(true);
+        this.node.getChildByName("viewBackground").active = false;
+      }
     },
 
     onTapSpecialView() {
