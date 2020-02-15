@@ -430,6 +430,8 @@ cc.Class({
     subUIDisabled() {
       this.node.getChildByName("saveWindow").active = false;
       this.node.getChildByName("positionResetButton").active = false;
+      
+      this.closeDetailView();
     },
 
     getHitWall(point) {
@@ -672,8 +674,11 @@ cc.Class({
       }
 
       this.save();
+      this.closeDetailView();
+    },
 
-      detailView.active = false;
+    closeDetailView() {
+      this.node.getChildByName("detailView").active = false;
       this.node.getChildByName("mark").active = false;
 
       if (this._cannotAction) {
