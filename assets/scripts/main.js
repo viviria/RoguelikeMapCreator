@@ -49,7 +49,7 @@ cc.Class({
 
       _isTouch: false,
       _fileName: "map",
-      _isShowDetail: false,
+      _cannotAction: false,
     },
 
     setStateLabel(state) {
@@ -57,7 +57,7 @@ cc.Class({
     },
 
     onTapChangeMoveMode() {
-      if (this._isShowDetail) {
+      if (this._cannotAction) {
         return;
       }
 
@@ -133,7 +133,7 @@ cc.Class({
     },
 
     onTapChangeFloorMode() {
-      if (this._isShowDetail) {
+      if (this._cannotAction) {
         return;
       }
 
@@ -219,7 +219,7 @@ cc.Class({
     },
 
     onTapChangeWallMode() {
-      if (this._isShowDetail) {
+      if (this._cannotAction) {
         return;
       }
 
@@ -278,7 +278,7 @@ cc.Class({
     },
 
     onTapChangeEnemyMode() {
-      if (this._isShowDetail) {
+      if (this._cannotAction) {
         return;
       }
 
@@ -287,7 +287,7 @@ cc.Class({
       this.setStateLabel("enemy");
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
-        if (this._isShowDetail) {
+        if (this._cannotAction) {
           return;
         }
 
@@ -327,7 +327,7 @@ cc.Class({
     },
 
     onTapChangeItemMode() {
-      if (this._isShowDetail) {
+      if (this._cannotAction) {
         return;
       }
 
@@ -336,7 +336,7 @@ cc.Class({
       this.setStateLabel("item");
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
-        if (this._isShowDetail) {
+        if (this._cannotAction) {
           return;
         }
         this.generateItem(event.getLocation());
@@ -369,7 +369,7 @@ cc.Class({
     },
 
     onTapChangeStairsMode() {
-      if (this._isShowDetail) {
+      if (this._cannotAction) {
         return;
       }
 
@@ -378,7 +378,7 @@ cc.Class({
       this.setStateLabel("stairs");
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
-        if (this._isShowDetail) {
+        if (this._cannotAction) {
           return;
         }
         this.generateStairs(event.getLocation());
@@ -401,7 +401,7 @@ cc.Class({
     },
 
     onTapDownload() {
-      if (this._isShowDetail) {
+      if (this._cannotAction) {
         return;
       }
 
@@ -460,7 +460,7 @@ cc.Class({
     },
 
     onTapChangeRemoveMode() {
-      if (this._isShowDetail) {
+      if (this._cannotAction) {
         return;
       }
 
@@ -469,7 +469,7 @@ cc.Class({
       this.setStateLabel("remove");
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
-        if (this._isShowDetail) {
+        if (this._cannotAction) {
           return;
         }
 
@@ -489,7 +489,7 @@ cc.Class({
     },
 
     onTapChangeDetailMode() {
-      if (this._isShowDetail) {
+      if (this._cannotAction) {
         return;
       }
 
@@ -498,7 +498,7 @@ cc.Class({
       this.setStateLabel("detail");
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
-        if (this._isShowDetail) {
+        if (this._cannotAction) {
           return;
         }
 
@@ -606,7 +606,7 @@ cc.Class({
         return;
       }
 
-      this.node.getChildByName("detailViewBackground").active = true;
+      this.node.getChildByName("viewBackground").active = true;
       const detailView = this.node.getChildByName("detailView");
       detailView.active = true;
       const content = detailView.getComponent(cc.ScrollView).content;
@@ -623,7 +623,7 @@ cc.Class({
       }
 
       this.setUIButtonEnabled(false);
-      this._isShowDetail = true;
+      this._cannotAction = true;
     },
 
     onTapDetailSave() {
@@ -640,9 +640,18 @@ cc.Class({
       this.save();
 
       this.setUIButtonEnabled(true);
-      this.node.getChildByName("detailViewBackground").active = false;
+      this.node.getChildByName("viewBackground").active = false;
       detailView.active = false;
-      this._isShowDetail = false;
+      this._cannotAction = false;
+    },
+
+    onTapSpecialView() {
+      const specialView = this.node.getChildByName("specialView");
+      
+      this.setUIButtonEnabled(false);
+      this.node.getChildByName("viewBackground").active = true;
+      specialView.active = true;
+      this._cannotAction = true;
     },
 
     onLoad () {
