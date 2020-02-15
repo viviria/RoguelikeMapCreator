@@ -67,6 +67,7 @@ cc.Class({
       const touchEnd = (event) => {
         this._isTouch = false;
         prevPoint = null;
+        this.save();
       }
 
       this.node.on(cc.Node.EventType.TOUCH_END, touchEnd, this);
@@ -129,6 +130,7 @@ cc.Class({
 
       const touchEnd = (event) => {
         this._isTouch = false;
+        this.save();
       }
 
       this.node.on(cc.Node.EventType.TOUCH_END, touchEnd, this);
@@ -209,6 +211,7 @@ cc.Class({
 
       const touchEnd = (event) => {
         this._isTouch = false;
+        this.save();
       }
 
       this.node.on(cc.Node.EventType.TOUCH_END, touchEnd, this);
@@ -261,6 +264,7 @@ cc.Class({
 
       const touchEnd = (event) => {
         this._isTouch = false;
+        this.save();
       }
 
       this.node.on(cc.Node.EventType.TOUCH_END, touchEnd, this);
@@ -313,6 +317,7 @@ cc.Class({
 
       const touchEnd = (event) => {
         this._isTouch = false;
+        this.save();
       }
 
       this.node.on(cc.Node.EventType.TOUCH_END, touchEnd, this);
@@ -360,6 +365,7 @@ cc.Class({
 
       const touchEnd = (event) => {
         this._isTouch = false;
+        this.save();
       }
 
       this.node.on(cc.Node.EventType.TOUCH_END, touchEnd, this);
@@ -381,7 +387,7 @@ cc.Class({
     },
 
     onTapDownload() {
-      this.onTapSave();
+      this.save();
       const json = this.convertJson();
 
       const saveWindow = this.node.getChildByName("saveWindow");
@@ -437,7 +443,7 @@ cc.Class({
       }, this);
     },
 
-    onTapSave() {
+    save() {
       cc.sys.localStorage.setItem(this._fileName, this.convertJson());
     },
 
