@@ -529,6 +529,10 @@ cc.Class({
       const addChildren = (parent, children) => {
         for (let i = 0; i < children.length; i++) {
           parent.addChild(children[i]);
+          if (children[i].type != Type.FLOOR && children[i].type != Type.WALL) {
+            const size = children[i].getContentSize();
+            children[i].setContentSize(size.width * Math.pow(1 / 2, i), size.height * Math.pow(1 / 2, i));
+          }
         }
       };
 
