@@ -419,7 +419,6 @@ cc.Class({
 
       if (!isDebug()) {
         json = Base64.toBase64(RawDeflate.deflate(Base64.utob(json)));
-        console.log(json);
       }
 
       const saveWindow = this.node.getChildByName("saveWindow");
@@ -516,7 +515,16 @@ cc.Class({
     },
 
     save() {
-      cc.sys.localStorage.setItem(this._fileName, this.convertJson());
+      let json = this.convertJson();
+      if (!json || json == "[]") {
+        return;
+      }
+
+      if (!isDebug()) {
+        json = Base64.toBase64(RawDeflate.deflate(Base64.utob(json)));
+      }
+
+      cc.sys.localStorage.setItem(this._fileName, json);
     },
 
     getPrefabByType(type) {
@@ -536,7 +544,7 @@ cc.Class({
       return null;
     },
 
-    convertMap(json) {
+    convertMap(saveData) {
       const addChildren = (parent, children) => {
         for (let i = 0; i < children.length; i++) {
           parent.addChild(children[i]);
@@ -560,6 +568,11 @@ cc.Class({
       };
 
       const map = this.node.getChildByName("map");
+
+      let json = saveData;
+      if (!isDebug()) {
+        json = Base64.btou(RawDeflate.inflate(Base64.fromBase64(json)));
+      }
       const data = JSON.parse(json).map(mapFunc);
       addChildren(map, data);
     },
