@@ -483,7 +483,9 @@ cc.Class({
       const discretePoint = this.getNearlyPosition(pointOnMap, FLOOR_SPAN);
       const floor = this.getfloor(discretePoint);
 
-      this.showDetailView(floor);
+      if (floor) {
+        this.showDetailView(floor);
+      }
     },
 
     onTapChangeDetailMode() {
