@@ -440,6 +440,22 @@ cc.Class({
       cc.sys.localStorage.setItem(this._fileName, this.convertJson());
     },
 
+    onTapStartOk() {
+      const startMenu = this.node.getChildByName("startMenu");
+      const editBox = startMenu.getChildByName("editBox").getComponent(cc.EditBox);
+      this._fileName = editBox.string;
+
+      if (this._fileName) {
+        const data = cc.sys.localStorage.getItem(this._fileName);
+        if (data) {
+          
+        }
+      }
+
+      startMenu.active = false;
+      this.node.getChildByName("ui").active = true;
+    },
+
     onLoad () {
       const manager = cc.director.getCollisionManager();
       manager.enabled = true;
