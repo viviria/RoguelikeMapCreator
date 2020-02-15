@@ -43,7 +43,9 @@ cc.Class({
 
     onTapChangeMoveMode() {
       this.node.targetOff(this);
-      this.webViewDisabled();
+      this.subUIDisabled();
+      
+      this.node.getChildByName("positionResetButton").active = true;
 
       let prevPoint = null;
       const map = this.node.getChildByName("map");
@@ -72,7 +74,7 @@ cc.Class({
 
     onTapMoveReset() {
       this.node.targetOff(this);
-      this.webViewDisabled();
+      this.subUIDisabled();
       const map = this.node.getChildByName("map");
       map.position = cc.v2(0, 0);
     },
@@ -111,7 +113,7 @@ cc.Class({
 
     onTapChangeFloorMode() {
       this.node.targetOff(this);
-      this.webViewDisabled();
+      this.subUIDisabled();
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
         this._isTouch = true;
@@ -191,7 +193,7 @@ cc.Class({
 
     onTapChangeWallMode() {
       this.node.targetOff(this);
-      this.webViewDisabled();
+      this.subUIDisabled();
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
         this._isTouch = true;
@@ -243,7 +245,7 @@ cc.Class({
 
     onTapChangeEnemyMode() {
       this.node.targetOff(this);
-      this.webViewDisabled();
+      this.subUIDisabled();
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
         this._isTouch = true;
@@ -295,7 +297,7 @@ cc.Class({
 
     onTapChangeItemMode() {
       this.node.targetOff(this);
-      this.webViewDisabled();
+      this.subUIDisabled();
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
         this._isTouch = true;
@@ -342,7 +344,7 @@ cc.Class({
 
     onTapChangeStairsMode() {
       this.node.targetOff(this);
-      this.webViewDisabled();
+      this.subUIDisabled();
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
         this._isTouch = true;
@@ -363,7 +365,7 @@ cc.Class({
       this.node.on(cc.Node.EventType.TOUCH_CANCEL, touchEnd, this);
     },
 
-    onTapSave() {
+    onTapDownload() {
       const map = this.node.getChildByName("map");
 
       const func = x => {
@@ -383,8 +385,9 @@ cc.Class({
       webView.url = "https://viviria.github.io/JsonDownloader/?name=map&data=" + json; 
     },
 
-    webViewDisabled() {
+    subUIDisabled() {
       this.node.getChildByName("saveWindow").active = false;
+      this.node.getChildByName("positionResetButton").active = false;
     },
 
     getHitWall(point) {
@@ -422,7 +425,7 @@ cc.Class({
 
     onTapChangeRemoveMode() {
       this.node.targetOff(this);
-      this.webViewDisabled();
+      this.subUIDisabled();
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
         this.removeObject(event.getLocation());
