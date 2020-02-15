@@ -689,6 +689,7 @@ cc.Class({
       cc.sys.localStorage.removeItem(this._fileName);
       const map = this.node.getChildByName("map");
       map.removeAllChildren();
+      this.onTapCloseSpecialView();
     },
 
     onLoad () {
