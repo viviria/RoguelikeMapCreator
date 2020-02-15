@@ -86,7 +86,6 @@ cc.Class({
       const touchEnd = (event) => {
         this._isTouch = false;
         prevPoint = null;
-        this.save();
       }
 
       this.node.on(cc.Node.EventType.TOUCH_END, touchEnd, this);
