@@ -370,7 +370,7 @@ cc.Class({
       const map = this.node.getChildByName("map");
       const func = x => {
         return {
-          name: x.name,
+          type: x.type,
           position: x.position,
           angle: x.angle,
           children: x.getChildren().map(func),
@@ -380,39 +380,6 @@ cc.Class({
       return JSON.stringify(children);
     },
 
-    getPrefabByName(name, prefabs) {
-      for (let i = 0; i < prefabs.length; i++) {
-        if (name == prefabs[i].data.name) {
-          return prefabs[i];
-        }
-      }
-      return null;
-    },
-    
-    convertMap(json) {
-      const addChildren = (parent, children) => {
-        for (let i = 0; i < children.length; i++) {
-          parent.addChild(children[i]);
-        }
-      };
-
-      const mapFunc = (data) => {
-        const prefab = this.getPrefabByName(data.name, [
-          this.floorPrefab, this.wallPrefab, this.enemyPrefab, this.itemPrefab, this.stairsPrefab
-        ]);
-        const node = cc.instantiate(prefab);
-        node.position = data.position;
-        node.angle = data.angle;
-        const children = data.children.map(mapFunc);
-        addChildren(node, children);
-        return node;
-      };
-
-      const map = this.node.getChildByName("map");
-      const data = JSON.parse(json).map(mapFunc);
-      addChildren(map, data);
-    },
-
     onTapDownload() {
       this.onTapSave();
       const json = this.convertJson();
@@ -420,7 +387,7 @@ cc.Class({
       const saveWindow = this.node.getChildByName("saveWindow");
       saveWindow.active = true;
       const webView = saveWindow.getComponent(cc.WebView);
-      webView.url = "https://viviria.github.io/JsonDownloader/?name=" + this._fileName +"&data=" + json; 
+      webView.url = "https://viviria.github.io/JsonDownloader/?name=" + this._fileName + "&data=" + json;
     },
 
     subUIDisabled() {
@@ -472,6 +439,46 @@ cc.Class({
 
     onTapSave() {
       cc.sys.localStorage.setItem(this._fileName, this.convertJson());
+    },
+
+    getPrefabByType(type) {
+      switch (type) {
+        case Type.FLOOR:
+          return this.floorPrefab;
+        case Type.WALL:
+          return this.wallPrefab;
+        case Type.ENEMY:
+          return this.enemyPrefab;
+        case Type.ITEM:
+          return this.itemPrefab;
+        case Type.STAIRS:
+          return this.stairsPrefab;
+      }
+      
+      return null;
+    },
+
+    convertMap(json) {
+      const addChildren = (parent, children) => {
+        for (let i = 0; i < children.length; i++) {
+          parent.addChild(children[i]);
+        }
+      };
+
+      const mapFunc = (data) => {
+        const prefab = this.getPrefabByType(data.type);
+        const node = cc.instantiate(prefab);
+        node.type = data.type;
+        node.position = data.position;
+        node.angle = data.angle;
+        const children = data.children.map(mapFunc);
+        addChildren(node, children);
+        return node;
+      };
+
+      const map = this.node.getChildByName("map");
+      const data = JSON.parse(json).map(mapFunc);
+      addChildren(map, data);
     },
 
     onTapStartOk() {
