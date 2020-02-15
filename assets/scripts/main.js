@@ -381,6 +381,7 @@ cc.Class({
     },
 
     onTapDownload() {
+      this.onTapSave();
       const json = this.convertJson();
 
       const saveWindow = this.node.getChildByName("saveWindow");
@@ -448,7 +449,7 @@ cc.Class({
       if (this._fileName) {
         const data = cc.sys.localStorage.getItem(this._fileName);
         if (data) {
-          
+
         }
       }
 
