@@ -9,6 +9,10 @@ const Type = cc.Enum({
 const FLOOR_SPAN = 50;
 const WALL_SPAN = 25;
 
+const isDebug = function () {
+  return cc.game.config.debugMode <= 1;
+};
+
 cc.Class({
     extends: cc.Component,
 
@@ -381,7 +385,7 @@ cc.Class({
       this.save();
       let json = this.convertJson();
 
-      if (Base64 && RawDeflate) {
+      if (!isDebug()) {
         json = Base64.toBase64(RawDeflate.deflate(Base64.utob(json)));
         console.log(json);
       }
