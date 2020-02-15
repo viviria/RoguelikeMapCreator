@@ -409,9 +409,11 @@ cc.Class({
         const children = floor.getChildren().reverse();
         if (children.length > 0) {
           children[0].removeFromParent();
+          this.save();
           return;
         }
         floor.removeFromParent();
+        this.save();
       }
     },
 
