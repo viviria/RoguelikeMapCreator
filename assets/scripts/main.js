@@ -43,6 +43,7 @@ cc.Class({
 
     onTapChangeMoveMode() {
       this.node.targetOff(this);
+      this.webViewDisabled();
 
       let prevPoint = null;
       const map = this.node.getChildByName("map");
@@ -71,6 +72,7 @@ cc.Class({
 
     onTapMoveReset() {
       this.node.targetOff(this);
+      this.webViewDisabled();
       const map = this.node.getChildByName("map");
       map.position = cc.v2(0, 0);
     },
@@ -109,6 +111,7 @@ cc.Class({
 
     onTapChangeFloorMode() {
       this.node.targetOff(this);
+      this.webViewDisabled();
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
         this._isTouch = true;
@@ -188,6 +191,7 @@ cc.Class({
 
     onTapChangeWallMode() {
       this.node.targetOff(this);
+      this.webViewDisabled();
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
         this._isTouch = true;
@@ -239,6 +243,7 @@ cc.Class({
 
     onTapChangeEnemyMode() {
       this.node.targetOff(this);
+      this.webViewDisabled();
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
         this._isTouch = true;
@@ -290,6 +295,7 @@ cc.Class({
 
     onTapChangeItemMode() {
       this.node.targetOff(this);
+      this.webViewDisabled();
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
         this._isTouch = true;
@@ -336,6 +342,7 @@ cc.Class({
 
     onTapChangeStairsMode() {
       this.node.targetOff(this);
+      this.webViewDisabled();
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
         this._isTouch = true;
@@ -368,7 +375,16 @@ cc.Class({
         }
       }
       const children = map.getChildren().map(func);
-      cc.log(JSON.stringify(children));
+      const json = JSON.stringify(children);
+
+      const saveWindow = this.node.getChildByName("saveWindow");
+      saveWindow.active = true;
+      const webView = saveWindow.getComponent(cc.WebView);
+      webView.url = "https://viviria.github.io/JsonDownloader/?name=map&data=" + json; 
+    },
+
+    webViewDisabled() {
+      this.node.getChildByName("saveWindow").active = false;
     },
 
     getHitWall(point) {
@@ -406,6 +422,7 @@ cc.Class({
 
     onTapChangeRemoveMode() {
       this.node.targetOff(this);
+      this.webViewDisabled();
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
         this.removeObject(event.getLocation());
