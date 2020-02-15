@@ -634,6 +634,10 @@ cc.Class({
         return;
       }
 
+      const mark = this.node.getChildByName("mark");
+      mark.active = true;
+      mark.position = node.position.add(node.parent.position);
+
       this.node.getChildByName("viewBackground").active = true;
       const detailView = this.node.getChildByName("detailView");
       detailView.active = true;
@@ -671,6 +675,7 @@ cc.Class({
       this.node.getChildByName("viewBackground").active = false;
       detailView.active = false;
       this._cannotAction = false;
+      this.node.getChildByName("mark").active = false;
     },
 
     onTapSpecialView() {
