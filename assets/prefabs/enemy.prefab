@@ -18,7 +18,7 @@
     "_parent": null,
     "_children": [],
     "_active": true,
-    "_level": 2,
+    "_level": 1,
     "_components": [
       {
         "__id__": 2
@@ -30,7 +30,7 @@
     "_opacity": 255,
     "_color": {
       "__type__": "cc.Color",
-      "r": 195,
+      "r": 255,
       "g": 255,
       "b": 3,
       "a": 255
@@ -107,7 +107,7 @@
       "__id__": 1
     },
     "asset": {
-      "__id__": 0
+      "__uuid__": "7ecd4f3d-24d6-4e77-8c86-c63b6b57f6f0"
     },
     "fileId": "81oAk0AXlCqpXRRKsn86MM",
     "sync": false

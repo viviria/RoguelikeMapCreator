@@ -18,7 +18,7 @@
     "_parent": null,
     "_children": [],
     "_active": true,
-    "_level": 3,
+    "_level": 1,
     "_components": [
       {
         "__id__": 2
@@ -47,7 +47,7 @@
     },
     "_position": {
       "__type__": "cc.Vec3",
-      "x": -50,
+      "x": 0,
       "y": 0,
       "z": 0
     },
@@ -107,7 +107,7 @@
       "__id__": 1
     },
     "asset": {
-      "__id__": 0
+      "__uuid__": "8f8fe018-7247-41b5-9b7c-07b2e72cfa5d"
     },
     "fileId": "5facU7AYxOu6UK4Q+AdttD",
     "sync": false
