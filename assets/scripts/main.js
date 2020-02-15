@@ -39,6 +39,7 @@ cc.Class({
       },
 
       _isTouch: false,
+      _fileName: "map",
     },
 
     onTapChangeMoveMode() {
@@ -365,9 +366,8 @@ cc.Class({
       this.node.on(cc.Node.EventType.TOUCH_CANCEL, touchEnd, this);
     },
 
-    onTapDownload() {
+    convertJson() {
       const map = this.node.getChildByName("map");
-
       const func = x => {
         return {
           name: x.name,
@@ -377,12 +377,16 @@ cc.Class({
         }
       }
       const children = map.getChildren().map(func);
-      const json = JSON.stringify(children);
+      return JSON.stringify(children);
+    },
+
+    onTapDownload() {
+      const json = this.convertJson();
 
       const saveWindow = this.node.getChildByName("saveWindow");
       saveWindow.active = true;
       const webView = saveWindow.getComponent(cc.WebView);
-      webView.url = "https://viviria.github.io/JsonDownloader/?name=map&data=" + json; 
+      webView.url = "https://viviria.github.io/JsonDownloader/?name=" + this._fileName +"&data=" + json; 
     },
 
     subUIDisabled() {
@@ -430,6 +434,10 @@ cc.Class({
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
         this.removeObject(event.getLocation());
       }, this);
+    },
+
+    onTapSave() {
+      cc.sys.localStorage.setItem(this._fileName, this.convertJson());
     },
 
     onLoad () {
