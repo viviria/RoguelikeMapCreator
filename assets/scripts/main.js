@@ -573,6 +573,10 @@ cc.Class({
       if (!isDebug()) {
         json = Base64.btou(RawDeflate.inflate(Base64.fromBase64(json)));
       }
+
+      if (!json || json == "[]") {
+        return;
+      }
       const data = JSON.parse(json).map(mapFunc);
       addChildren(map, data);
     },
