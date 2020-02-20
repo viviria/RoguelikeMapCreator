@@ -4,6 +4,7 @@ const Type = cc.Enum({
   ITEM: 2,
   ENEMY: 3,
   STAIRS: 4,
+  TRAP: 5,
 });
 
 const FLOOR_SPAN = 50;
@@ -38,6 +39,11 @@ cc.Class({
       },
 
       stairsPrefab: {
+        type: cc.Prefab,
+        default: null,
+      },
+
+      trapPrefab: {
         type: cc.Prefab,
         default: null,
       },
@@ -256,8 +262,8 @@ cc.Class({
       this.node.on(cc.Node.EventType.TOUCH_CANCEL, touchEnd, this);
     },
 
-    isAlreadyPutEnemy(floor) {
-      const children = floor.getChildren().filter(x => x.type == Type.ENEMY);
+    isAlreadyPutTypeOnFloor(floor, types) {
+      const children = floor.getChildren().filter(x => types.indexOf(x.type) >= 0);
       return children.length > 0;
     },
 
@@ -270,7 +276,7 @@ cc.Class({
         return;
       }
 
-      if (this.isAlreadyPutEnemy(floor) || this.isAlreadyPutStairs(floor)) {
+      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ENEMY, Type.STAIRS])) {
         return;
       }
 
@@ -278,7 +284,7 @@ cc.Class({
       enemy.type = Type.ENEMY;
       enemy.position = cc.v2(0, 0);
 
-      if (this.isAlreadyPutItem(floor)) {
+      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ITEM])) {
         enemy.setContentSize(10, 10);
       }
       
@@ -304,11 +310,6 @@ cc.Class({
         this.generateEnemy(event.getLocation());
       }, this);
     },
-    
-    isAlreadyPutItem(floor) {
-      const children = floor.getChildren().filter(x => x.type == Type.ITEM);
-      return children.length > 0;
-    },
 
     generateItem(point) {
       const map = this.node.getChildByName("map");
@@ -319,7 +320,7 @@ cc.Class({
         return;
       }
 
-      if (this.isAlreadyPutItem(floor) || this.isAlreadyPutStairs(floor)) {
+      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ITEM, Type.STAIRS])) {
         return;
       }
 
@@ -327,7 +328,7 @@ cc.Class({
       item.type = Type.ITEM;
       item.position = cc.v2(0, 0);
 
-      if (this.isAlreadyPutEnemy(floor)) {
+      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ENEMY])) {
         item.setContentSize(10, 10);
       }
 
@@ -352,11 +353,6 @@ cc.Class({
       }, this);
     },
 
-    isAlreadyPutStairs(floor) {
-      const children = floor.getChildren().filter(x => x.type == Type.STAIRS);
-      return children.length > 0;
-    },
-
     generateStairs(point) {
       const map = this.node.getChildByName("map");
       const pointOnMap = map.convertToNodeSpace(point);
@@ -366,7 +362,7 @@ cc.Class({
         return;
       }
 
-      if (this.isAlreadyPutStairs(floor) || this.isAlreadyPutItem(floor) || this.isAlreadyPutEnemy(floor)) {
+      if (this.isAlreadyPutTypeOnFloor(floor, [Type.STAIRS, Type.ITEM, Type.ENEMY])) {
         return;
       }
 
@@ -391,6 +387,43 @@ cc.Class({
           return;
         }
         this.generateStairs(event.getLocation());
+      }, this);
+    },
+
+    generateTrap(point) {
+      const map = this.node.getChildByName("map");
+      const pointOnMap = map.convertToNodeSpace(point);
+      const discretePoint = this.getNearlyPosition(pointOnMap, FLOOR_SPAN);
+      const floor = this.getfloor(discretePoint);
+      if (!floor) {
+        return;
+      }
+
+      if (this.isAlreadyPutTypeOnFloor(floor, [Type.STAIRS, Type.ITEM, Type.ENEMY])) {
+        return;
+      }
+
+      const trap = cc.instantiate(this.trapPrefab);
+      trap.type = Type.TRAP;
+      trap.position = cc.v2(0, 0);
+      floor.addChild(trap);
+      this.showDetailView(floor);
+    },
+
+    onTapChangeTrapMode() {
+      if (this._cannotAction) {
+        return;
+      }
+
+      this.node.targetOff(this);
+      this.subUIDisabled();
+      this.setStateLabel("Trap");
+
+      this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
+        if (this._cannotAction) {
+          return;
+        }
+        this.generateTrap(event.getLocation());
       }, this);
     },
 
@@ -541,6 +574,8 @@ cc.Class({
           return this.itemPrefab;
         case Type.STAIRS:
           return this.stairsPrefab;
+        case Type.TRAP:
+          return this.trapPrefab;
       }
       
       return null;
