@@ -190,10 +190,12 @@ cc.Class({
       const discretePoint = this.getNearlyPosition(pointOnMap, FLOOR_SPAN);
       const floor = this.getfloor(discretePoint);
       if (!floor) {
+        cc.log("no floor")
         return;
       }
 
-      if (isAlreadyPutTypeOnFloor(floor, [Type.WALL, Type.ENEMY, Type.ITEM, Type.STAIRS, Type.TRAP])) {
+      if (this.isAlreadyPutTypeOnFloor(floor, [Type.WALL, Type.ENEMY, Type.ITEM, Type.STAIRS, Type.TRAP])) {
+        cc.log("can't put");
         return;
       }
 
