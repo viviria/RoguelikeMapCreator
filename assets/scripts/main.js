@@ -184,31 +184,6 @@ cc.Class({
       return null;
     },
 
-    getWallPositionAndAngle(pointOnMap, discretePoint) {
-      const angle = Math.atan2(pointOnMap.x - discretePoint.x, pointOnMap.y - discretePoint.y) * 180 / Math.PI;
-
-      let addPoint = cc.v2(0, 0);
-      let rotation = 0;
-      if (angle > -45 && angle <= 45) {
-        addPoint = cc.v2(0, WALL_SPAN);
-        rotation = 0;
-      } else if (angle > 45 && angle <= 135) {
-        addPoint = cc.v2(WALL_SPAN, 0);
-        rotation = -90;
-      } else if (angle > -135 && angle <= -45) {
-        addPoint = cc.v2(-WALL_SPAN, 0);
-        rotation = 90;
-      } else {
-        addPoint = cc.v2(0, -WALL_SPAN);
-        rotation = 180;
-      }
-
-      return {
-        position: discretePoint.add(addPoint),
-        angle: rotation,
-      }
-    },
-
     generateWall(point) {
       const map = this.node.getChildByName("map");
       const pointOnMap = map.convertToNodeSpace(point);
@@ -218,16 +193,14 @@ cc.Class({
         return;
       }
 
-      const positionAndAngle = this.getWallPositionAndAngle(pointOnMap, discretePoint);
-      if (this.isAlreadyPutObject(positionAndAngle.position, Type.WALL)) {
+      if (isAlreadyPutTypeOnFloor(floor, [Type.WALL, Type.ENEMY, Type.ITEM, Type.STAIRS, Type.TRAP])) {
         return;
       }
 
       const wall = cc.instantiate(this.wallPrefab);
       wall.type = Type.WALL;
-      wall.position = positionAndAngle.position;
-      wall.angle = positionAndAngle.angle;
-      map.addChild(wall);
+      wall.position = cc.v2(0, 0);
+      floor.addChild(wall);
     },
 
     onTapChangeWallMode() {
@@ -276,7 +249,7 @@ cc.Class({
         return;
       }
 
-      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ENEMY, Type.STAIRS])) {
+      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ENEMY, Type.WALL])) {
         return;
       }
 
@@ -284,7 +257,7 @@ cc.Class({
       enemy.type = Type.ENEMY;
       enemy.position = cc.v2(0, 0);
 
-      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ITEM])) {
+      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ITEM, Type.STAIRS, Type.TRAP])) {
         enemy.setContentSize(10, 10);
       }
       
@@ -320,7 +293,7 @@ cc.Class({
         return;
       }
 
-      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ITEM, Type.STAIRS])) {
+      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ITEM, Type.WALL, Type.STAIRS])) {
         return;
       }
 
@@ -328,8 +301,8 @@ cc.Class({
       item.type = Type.ITEM;
       item.position = cc.v2(0, 0);
 
-      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ENEMY])) {
-        item.setContentSize(10, 10);
+      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ENEMY, Type.TRAP])) {
+        enemy.setContentSize(10, 10);
       }
 
       floor.addChild(item);
@@ -362,13 +335,18 @@ cc.Class({
         return;
       }
 
-      if (this.isAlreadyPutTypeOnFloor(floor, [Type.STAIRS, Type.ITEM, Type.ENEMY])) {
+      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ITEM, Type.STAIRS, Type.WALL, Type.TRAP])) {
         return;
       }
 
       const stairs = cc.instantiate(this.stairsPrefab);
       stairs.type = Type.STAIRS;
       stairs.position = cc.v2(0, 0);
+
+      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ENEMY])) {
+        stairs.setContentSize(10, 10);
+      }
+
       floor.addChild(stairs);
       this.showDetailView(floor);
     },
@@ -399,13 +377,18 @@ cc.Class({
         return;
       }
 
-      if (this.isAlreadyPutTypeOnFloor(floor, [Type.STAIRS, Type.ITEM, Type.ENEMY])) {
+      if (this.isAlreadyPutTypeOnFloor(floor, [Type.TRAP, Type.STAIRS, Type.WALL])) {
         return;
       }
 
       const trap = cc.instantiate(this.trapPrefab);
       trap.type = Type.TRAP;
       trap.position = cc.v2(0, 0);
+
+      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ENEMY, Type.ITEM])) {
+        trap.setContentSize(10, 10);
+      }
+
       floor.addChild(trap);
       this.showDetailView(floor);
     },
