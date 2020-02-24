@@ -561,12 +561,15 @@ cc.Class({
       
       const typeNode = isTile ? this.instantiateTile(node.type) : this.instantiateEventObject(node.type);
       typeNode.position = cc.v2(0, 0);
-      detailPanel.getChildByName("type").addChild(typeNode);
+      detailPanel.getChildByName("symbol").addChild(typeNode);
       detailPanel.getChildByName("nameLabel").getComponent(cc.Label).string = typeNode.name;
       detailPanel.targetNode = node;
+      detailPanel.isTile = isTile;
 
-      const idEditBox = detailPanel.getChildByName("id").getChildByName("idEditBox");
-      idEditBox.getComponent(cc.EditBox).string = node.interId === undefined ? -1 : node.interId;
+      const detail = detailPanel.getChildByName(isTile ? "type" : "id");
+      const editBox = detail.getChildByName("editBox");
+      editBox.getComponent(cc.EditBox).string = node.interId === undefined ? -1 : node.interId;
+      detail.active = true;
 
       return detailPanel;
     },
@@ -599,15 +602,50 @@ cc.Class({
       }
     },
 
-    onTapDetailSave() {
+    onTapSaveDetail() {
       const detailView = this.node.getChildByName("detailView");
       const content = detailView.getComponent(cc.ScrollView).content;
       const children = content.getChildren();
 
+      const changeTile = (orignalNode, type) => {
+        const node = this.instantiateTile(type);
+        if (!node) {
+          return;
+        }
+
+        const children = orignalNode.getChildren();
+        const length = children.length;
+        for (let i = 0; i < length; i++) {
+          const child = children[0];
+          child.removeFromParent();
+          node.addChild(child);
+        }
+        node.interId = node.type = type;
+        node.position = orignalNode.position;
+        orignalNode.removeFromParent();
+        
+        const map = this.node.getChildByName("map");
+        map.addChild(node);
+      };
+
       for (let i = 0; i < children.length; i++) {
         const detailPanel = children[i];
-        const idEditBox = detailPanel.getChildByName("id").getChildByName("idEditBox");
-        detailPanel.targetNode.interId = Number(idEditBox.getComponent(cc.EditBox).string);
+        const editBox = detailPanel.getChildByName(detailPanel.isTile ? "type" : "id").getChildByName("editBox");
+        if (isNaN(editBox.getComponent(cc.EditBox).string)) {
+          return;
+        }
+      }
+
+      for (let i = 0; i < children.length; i++) {
+        const detailPanel = children[i];
+        if (detailPanel.isTile) {
+          const editBox = detailPanel.getChildByName("type").getChildByName("editBox");
+          const type = Number(editBox.getComponent(cc.EditBox).string);
+          changeTile(detailPanel.targetNode, type);
+        } else {
+          const editBox = detailPanel.getChildByName("id").getChildByName("editBox");
+          detailPanel.targetNode.interId = Number(editBox.getComponent(cc.EditBox).string);
+        }
       }
 
       this.save();
