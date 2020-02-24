@@ -5,10 +5,20 @@ const TileType = cc.Enum({
 });
 
 const EventObjectType = cc.Enum({
-  ITEM: 0,
-  ENEMY: 1,
+  ENEMY: 0,
+  ITEM: 1,
   STAIRS: 2,
   TRAP: 3,
+});
+
+const Mode = cc.Enum({
+  NONE: 0,
+  MOVE: 1,
+  TILE: 2,
+  ENEMY: 3,
+  ITEM: 4,
+  STAIRS: 5,
+  TRAP: 6,
 });
 
 const TILE_SPAN = 50;
@@ -59,49 +69,156 @@ cc.Class({
       _isTouch: false,
       _fileName: "map",
       _cannotAction: false,
+
+      _mode: Mode.NONE,
+      _tileType: TileType.FLOOR,
     },
 
     setStateLabel(state) {
       this.node.getChildByName("stateLabel").getComponent(cc.Label).string = state;
     },
 
-    onTapChangeMoveMode() {
+    changeMode(touchStart, touchMove, touchEnd) {
       if (this._cannotAction) {
         return;
       }
 
       this.node.targetOff(this);
       this.subUIDisabled();
-      this.setStateLabel("move");
-      
-      this.node.getChildByName("positionResetButton").active = true;
-
-      let prevPoint = null;
-      const map = this.node.getChildByName("map");
 
       this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
         if (this._cannotAction) {
           return;
         }
         this._isTouch = true;
-        prevPoint = event.getLocation();
-      }, this);
-
-      this.node.on(cc.Node.EventType.TOUCH_MOVE, (event) => {
-        if (this._isTouch && prevPoint) {
-          const nowPoint = event.getLocation();
-          map.position = map.position.add(nowPoint.sub(prevPoint));
-          prevPoint = nowPoint;
+        if (touchStart) {
+          touchStart(event.getLocation());
         }
       }, this);
 
-      const touchEnd = (event) => {
+      this.node.on(cc.Node.EventType.TOUCH_MOVE, (event) => {
+        if (this._isTouch) {
+          if (touchMove) {
+            touchMove(event.getLocation());
+          }
+        }
+      }, this);
+
+      const touchEndCallback = (event) => {
+        if (this._isTouch && touchEnd) {
+          touchEnd();
+        }
         this._isTouch = false;
-        prevPoint = null;
       }
 
-      this.node.on(cc.Node.EventType.TOUCH_END, touchEnd, this);
-      this.node.on(cc.Node.EventType.TOUCH_CANCEL, touchEnd, this);
+      this.node.on(cc.Node.EventType.TOUCH_END, touchEndCallback, this);
+      this.node.on(cc.Node.EventType.TOUCH_CANCEL, touchEndCallback, this);
+    },
+
+    onTapChangeMode(event, data) {
+      this._mode = Number(data);
+
+      switch (this._mode) {
+        case Mode.MOVE:
+          this.setStateLabel("move");
+          this.changeMoveMode();
+          break;
+        case Mode.TILE:
+          this.setStateLabel("tile");
+          this.changeTileMode();
+          break;
+        case Mode.ENEMY:
+          this.setStateLabel("enemy");
+          this.changeEventObjectMode(EventObjectType.ENEMY);
+        case Mode.ITEM:
+          this.setStateLabel("item");
+          this.changeEventObjectMode(EventObjectType.ITEM);
+          break;
+        case Mode.STAIRS:
+          this.setStateLabel("stairs");
+          this.changeEventObjectMode(EventObjectType.STAIRS);
+          break;
+        case Mode.TRAP:
+          this.setStateLabel("trap");
+          this.changeEventObjectMode(EventObjectType.TRAP);
+          break;
+      }
+    },
+
+    changeMoveMode() {
+      const map = this.node.getChildByName("map");
+      let prevPoint = null;
+
+      this.changeMode(
+        (point) => {
+          prevPoint = point;
+        },
+        (point) => {
+          const nowPoint = point;
+          map.position = map.position.add(nowPoint.sub(prevPoint));
+          prevPoint = nowPoint;
+        },
+        () => {
+          prevPoint = null;
+        }
+      );
+
+      this.node.getChildByName("positionResetButton").active = true;
+    },
+
+    changeTileMode() {
+      this.changeMode(
+        (point) => {
+          this.generateTile(point, this._tileType);
+        },
+        (point) => {
+          this.generateTile(point, this._tileType);
+        },
+        () => {
+          this.save();
+        }
+      );
+    },
+
+    changeEventObjectMode(eventObjectType) {
+      this.changeMode(
+        (point) => {
+          switch (eventObjectType) {
+            case EventObjectType.ENEMY:
+              this.generateEventObject(
+                point,
+                EventObjectType.ENEMY,
+                [EventObjectType.ENEMY],
+                [EventObjectType.ITEM, EventObjectType.STAIRS, EventObjectType.TRAP]
+              );
+            break;
+            case EventObjectType.ITEM:
+              this.generateEventObject(
+                point,
+                EventObjectType.ITEM,
+                [EventObjectType.ITEM, EventObjectType.STAIRS],
+                [EventObjectType.ENEMY, EventObjectType.TRAP]
+              );
+            break;
+            case EventObjectType.STAIRS:
+              this.generateEventObject(
+                point,
+                EventObjectType.STAIRS,
+                [EventObjectType.STAIRS, EventObjectType.ITEM, EventObjectType.TRAP],
+                [EventObjectType.ENEMY]
+              );
+            break;
+            case EventObjectType.TRAP:
+              this.generateEventObject(
+                point,
+                EventObjectType.TRAP,
+                [EventObjectType.TRAP, EventObjectType.STAIRS],
+                [EventObjectType.ENEMY, EventObjectType.ITEM]
+              );
+            break;
+          }
+        }
+      );
     },
 
     onTapMoveReset() {
@@ -152,39 +269,6 @@ cc.Class({
       tile.type = tileType;
       tile.position = discretePoint;
       map.addChild(tile);
-    },
-
-    onTapChangeFloorMode() {
-      if (this._cannotAction) {
-        return;
-      }
-
-      this.node.targetOff(this);
-      this.subUIDisabled();
-      this.setStateLabel("floor");
-
-      this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
-        if (this._cannotAction) {
-          return;
-        }
-
-        this._isTouch = true;
-        this.generateTile(event.getLocation(), TileType.FLOOR);
-      }, this);
-
-      this.node.on(cc.Node.EventType.TOUCH_MOVE, (event) => {
-        if (this._isTouch) {
-          this.generateTile(event.getLocation(), TileType.FLOOR);
-        }
-      }, this);
-
-      const touchEnd = (event) => {
-        this._isTouch = false;
-        this.save();
-      }
-
-      this.node.on(cc.Node.EventType.TOUCH_END, touchEnd, this);
-      this.node.on(cc.Node.EventType.TOUCH_CANCEL, touchEnd, this);
     },
 
     getTile(point) {
@@ -272,96 +356,6 @@ cc.Class({
       
       tile.addChild(eventObject);
       this.showDetailView(tile);
-    },
-
-    onTapChangeEnemyMode() {
-      if (this._cannotAction) {
-        return;
-      }
-
-      this.node.targetOff(this);
-      this.subUIDisabled();
-      this.setStateLabel("enemy");
-
-      this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
-        if (this._cannotAction) {
-          return;
-        }
-
-        this._isTouch = true;
-        this.generateEventObject(
-          event.getLocation(),
-          EventObjectType.ENEMY,
-          [EventObjectType.ENEMY],
-          [EventObjectType.ITEM, EventObjectType.STAIRS, EventObjectType.TRAP]
-        );
-      }, this);
-    },
-
-    onTapChangeItemMode() {
-      if (this._cannotAction) {
-        return;
-      }
-
-      this.node.targetOff(this);
-      this.subUIDisabled();
-      this.setStateLabel("item");
-
-      this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
-        if (this._cannotAction) {
-          return;
-        }
-        this.generateEventObject(
-          event.getLocation(),
-          EventObjectType.ITEM,
-          [EventObjectType.ITEM, EventObjectType.STAIRS],
-          [EventObjectType.ENEMY, EventObjectType.TRAP]
-        );
-      }, this);
-    },
-
-    onTapChangeStairsMode() {
-      if (this._cannotAction) {
-        return;
-      }
-
-      this.node.targetOff(this);
-      this.subUIDisabled();
-      this.setStateLabel("stairs");
-
-      this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
-        if (this._cannotAction) {
-          return;
-        }
-        this.generateEventObject(
-          event.getLocation(),
-          EventObjectType.STAIRS,
-          [EventObjectType.STAIRS, EventObjectType.ITEM, EventObjectType.TRAP],
-          [EventObjectType.ENEMY]
-        );
-      }, this);
-    },
-
-    onTapChangeTrapMode() {
-      if (this._cannotAction) {
-        return;
-      }
-
-      this.node.targetOff(this);
-      this.subUIDisabled();
-      this.setStateLabel("Trap");
-
-      this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
-        if (this._cannotAction) {
-          return;
-        }
-        this.generateEventObject(
-          event.getLocation(),
-          EventObjectType.TRAP,
-          [EventObjectType.TRAP, EventObjectType.STAIRS],
-          [EventObjectType.ENEMY, EventObjectType.ITEM]
-        );
-      }, this);
     },
 
     convertJson() {
