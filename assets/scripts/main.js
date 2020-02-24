@@ -1,14 +1,17 @@
-const Type = cc.Enum({
+const TileType = cc.Enum({
   FLOOR: 0,
   WALL: 1,
-  ITEM: 2,
-  ENEMY: 3,
-  STAIRS: 4,
-  TRAP: 5,
+  WATER: 2,
 });
 
-const FLOOR_SPAN = 50;
-const WALL_SPAN = 25;
+const EventObjectType = cc.Enum({
+  ITEM: 0,
+  ENEMY: 1,
+  STAIRS: 2,
+  TRAP: 3,
+});
+
+const TILE_SPAN = 50;
 
 const isDebug = function () {
   return cc.game.config.debugMode <= 1;
@@ -116,9 +119,9 @@ cc.Class({
       return new cc.Vec2(x, y);
     },
 
-    isAlreadyPutObject(point, type) {
+    isAlreadyPutTile(point) {
       const map = this.node.getChildByName("map");
-      const children = map.getChildren().filter(x => x.type == type);
+      const children = map.getChildren();
       for (let i = 0; i < children.length; i++) {
         if (children[i].x == point.x && children[i].y == point.y) {
           return true;
@@ -127,17 +130,28 @@ cc.Class({
       return false;
     },
 
-    generateFloor(point) {
+    instantiateTile(tileType) {
+      switch (tileType) {
+        case TileType.FLOOR:
+          return cc.instantiate(this.floorPrefab);
+        case TileType.WALL:
+          return cc.instantiate(this.wallPrefab);
+      }
+      return null;
+    },
+
+    generateTile(point, tileType) {
       const map = this.node.getChildByName("map");
-      const discretePoint = this.getNearlyPosition(map.convertToNodeSpace(point), FLOOR_SPAN);
-      if (this.isAlreadyPutObject(discretePoint, Type.FLOOR)) {
+      const discretePoint = this.getNearlyPosition(map.convertToNodeSpace(point), TILE_SPAN);
+      if (this.isAlreadyPutTile(discretePoint)) {
         return;
       }
 
-      const floor = cc.instantiate(this.floorPrefab);
-      floor.type = Type.FLOOR;
-      floor.position = discretePoint;
-      map.addChild(floor);
+      const tile = this.instantiateTile(tileType);
+      tile.interId = tileType;
+      tile.type = tileType;
+      tile.position = discretePoint;
+      map.addChild(tile);
     },
 
     onTapChangeFloorMode() {
@@ -155,12 +169,12 @@ cc.Class({
         }
 
         this._isTouch = true;
-        this.generateFloor(event.getLocation());
+        this.generateTile(event.getLocation(), TileType.FLOOR);
       }, this);
 
       this.node.on(cc.Node.EventType.TOUCH_MOVE, (event) => {
         if (this._isTouch) {
-          this.generateFloor(event.getLocation());
+          this.generateTile(event.getLocation(), TileType.FLOOR);
         }
       }, this);
 
@@ -173,36 +187,15 @@ cc.Class({
       this.node.on(cc.Node.EventType.TOUCH_CANCEL, touchEnd, this);
     },
 
-    getfloor(point) {
+    getTile(point) {
       const map = this.node.getChildByName("map");
-      const children = map.getChildren().filter(x => x.type == Type.FLOOR);
+      const children = map.getChildren();
       for (let i = 0; i < children.length; i++) {
         if (children[i].x == point.x && children[i].y == point.y) {
           return children[i];
         }
       }
       return null;
-    },
-
-    generateWall(point) {
-      const map = this.node.getChildByName("map");
-      const pointOnMap = map.convertToNodeSpace(point);
-      const discretePoint = this.getNearlyPosition(pointOnMap, FLOOR_SPAN);
-      const floor = this.getfloor(discretePoint);
-      if (!floor) {
-        cc.log("no floor")
-        return;
-      }
-
-      if (this.isAlreadyPutTypeOnFloor(floor, [Type.WALL, Type.ENEMY, Type.ITEM, Type.STAIRS, Type.TRAP])) {
-        cc.log("can't put");
-        return;
-      }
-
-      const wall = cc.instantiate(this.wallPrefab);
-      wall.type = Type.WALL;
-      wall.position = cc.v2(0, 0);
-      floor.addChild(wall);
     },
 
     onTapChangeWallMode() {
@@ -219,12 +212,12 @@ cc.Class({
           return;
         }
         this._isTouch = true;
-        this.generateWall(event.getLocation());
+        this.generateTile(event.getLocation(), TileType.WALL);
       }, this);
 
       this.node.on(cc.Node.EventType.TOUCH_MOVE, (event) => {
         if (this._isTouch) {
-          this.generateWall(event.getLocation());
+          this.generateTile(event.getLocation(), TileType.WALL);
         }
       }, this);
 
@@ -237,34 +230,48 @@ cc.Class({
       this.node.on(cc.Node.EventType.TOUCH_CANCEL, touchEnd, this);
     },
 
-    isAlreadyPutTypeOnFloor(floor, types) {
-      const children = floor.getChildren().filter(x => types.indexOf(x.type) >= 0);
+    isAlreadyPutTypeOnTile(tile, types) {
+      const children = tile.getChildren().filter(x => types.indexOf(x.type) >= 0);
       return children.length > 0;
     },
 
-    generateEnemy(point) {
+    instantiateEventObject(eventObjectType) {
+      switch (eventObjectType) {
+        case EventObjectType.ITEM:
+          return cc.instantiate(this.itemPrefab);
+        case EventObjectType.ENEMY:
+          return cc.instantiate(this.enemyPrefab);
+        case EventObjectType.STAIRS:
+          return cc.instantiate(this.stairsPrefab);
+        case EventObjectType.TRAP:
+          return cc.instantiate(this.trapPrefab);
+      }
+      return null;
+    },
+
+    generateEventObject(point, eventObjectType, alreadyCannnotPutType, alreadyCannPutType) {
       const map = this.node.getChildByName("map");
       const pointOnMap = map.convertToNodeSpace(point);
-      const discretePoint = this.getNearlyPosition(pointOnMap, FLOOR_SPAN);
-      const floor = this.getfloor(discretePoint);
-      if (!floor) {
+      const discretePoint = this.getNearlyPosition(pointOnMap, TILE_SPAN);
+      const tile = this.getTile(discretePoint);
+      if (!tile) {
         return;
       }
 
-      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ENEMY, Type.WALL])) {
+      if (this.isAlreadyPutTypeOnTile(tile, alreadyCannnotPutType)) {
         return;
       }
 
-      const enemy = cc.instantiate(this.enemyPrefab);
-      enemy.type = Type.ENEMY;
-      enemy.position = cc.v2(0, 0);
+      const eventObject = this.instantiateEventObject(eventObjectType);
+      eventObject.type = eventObjectType;
+      eventObject.position = cc.v2(0, 0);
 
-      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ITEM, Type.STAIRS, Type.TRAP])) {
-        enemy.setContentSize(10, 10);
+      if (this.isAlreadyPutTypeOnTile(tile, alreadyCannPutType)) {
+        eventObject.setContentSize(10, 10);
       }
       
-      floor.addChild(enemy);
-      this.showDetailView(floor);
+      tile.addChild(eventObject);
+      this.showDetailView(tile);
     },
 
     onTapChangeEnemyMode() {
@@ -282,33 +289,13 @@ cc.Class({
         }
 
         this._isTouch = true;
-        this.generateEnemy(event.getLocation());
+        this.generateEventObject(
+          event.getLocation(),
+          EventObjectType.ENEMY,
+          [EventObjectType.ENEMY],
+          [EventObjectType.ITEM, EventObjectType.STAIRS, EventObjectType.TRAP]
+        );
       }, this);
-    },
-
-    generateItem(point) {
-      const map = this.node.getChildByName("map");
-      const pointOnMap = map.convertToNodeSpace(point);
-      const discretePoint = this.getNearlyPosition(pointOnMap, FLOOR_SPAN);
-      const floor = this.getfloor(discretePoint);
-      if (!floor) {
-        return;
-      }
-
-      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ITEM, Type.WALL, Type.STAIRS])) {
-        return;
-      }
-
-      const item = cc.instantiate(this.itemPrefab);
-      item.type = Type.ITEM;
-      item.position = cc.v2(0, 0);
-
-      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ENEMY, Type.TRAP])) {
-        enemy.setContentSize(10, 10);
-      }
-
-      floor.addChild(item);
-      this.showDetailView(floor);
     },
 
     onTapChangeItemMode() {
@@ -324,33 +311,13 @@ cc.Class({
         if (this._cannotAction) {
           return;
         }
-        this.generateItem(event.getLocation());
+        this.generateEventObject(
+          event.getLocation(),
+          EventObjectType.ITEM,
+          [EventObjectType.ITEM, EventObjectType.STAIRS],
+          [EventObjectType.ENEMY, EventObjectType.TRAP]
+        );
       }, this);
-    },
-
-    generateStairs(point) {
-      const map = this.node.getChildByName("map");
-      const pointOnMap = map.convertToNodeSpace(point);
-      const discretePoint = this.getNearlyPosition(pointOnMap, FLOOR_SPAN);
-      const floor = this.getfloor(discretePoint);
-      if (!floor) {
-        return;
-      }
-
-      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ITEM, Type.STAIRS, Type.WALL, Type.TRAP])) {
-        return;
-      }
-
-      const stairs = cc.instantiate(this.stairsPrefab);
-      stairs.type = Type.STAIRS;
-      stairs.position = cc.v2(0, 0);
-
-      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ENEMY])) {
-        stairs.setContentSize(10, 10);
-      }
-
-      floor.addChild(stairs);
-      this.showDetailView(floor);
     },
 
     onTapChangeStairsMode() {
@@ -366,33 +333,13 @@ cc.Class({
         if (this._cannotAction) {
           return;
         }
-        this.generateStairs(event.getLocation());
+        this.generateEventObject(
+          event.getLocation(),
+          EventObjectType.STAIRS,
+          [EventObjectType.STAIRS, EventObjectType.ITEM, EventObjectType.TRAP],
+          [EventObjectType.ENEMY]
+        );
       }, this);
-    },
-
-    generateTrap(point) {
-      const map = this.node.getChildByName("map");
-      const pointOnMap = map.convertToNodeSpace(point);
-      const discretePoint = this.getNearlyPosition(pointOnMap, FLOOR_SPAN);
-      const floor = this.getfloor(discretePoint);
-      if (!floor) {
-        return;
-      }
-
-      if (this.isAlreadyPutTypeOnFloor(floor, [Type.TRAP, Type.STAIRS, Type.WALL])) {
-        return;
-      }
-
-      const trap = cc.instantiate(this.trapPrefab);
-      trap.type = Type.TRAP;
-      trap.position = cc.v2(0, 0);
-
-      if (this.isAlreadyPutTypeOnFloor(floor, [Type.ENEMY, Type.ITEM])) {
-        trap.setContentSize(10, 10);
-      }
-
-      floor.addChild(trap);
-      this.showDetailView(floor);
     },
 
     onTapChangeTrapMode() {
@@ -408,7 +355,12 @@ cc.Class({
         if (this._cannotAction) {
           return;
         }
-        this.generateTrap(event.getLocation());
+        this.generateEventObject(
+          event.getLocation(),
+          EventObjectType.TRAP,
+          [EventObjectType.TRAP, EventObjectType.STAIRS],
+          [EventObjectType.ENEMY, EventObjectType.ITEM]
+        );
       }, this);
     },
 
@@ -419,7 +371,6 @@ cc.Class({
           id: x.interId,
           type: x.type,
           position: x.position,
-          angle: x.angle,
           children: x.getChildren().map(func),
         }
       }
@@ -452,37 +403,19 @@ cc.Class({
       this.closeDetailView();
     },
 
-    getHitWall(point) {
-      const map = this.node.getChildByName("map");
-      const children = map.getChildren().filter(x => x.type == Type.WALL);
-      for (let i = 0; i < children.length; i++) {
-        const box = children[i].getComponent(cc.BoxCollider).world.points;
-        if (cc.Intersection.pointInPolygon(point, box)) {
-          return children[i];
-        }
-      }
-      return null;
-    },
-
     removeObject(point) {
-      const wall = this.getHitWall(point)
-      if (wall) {
-        wall.removeFromParent();
-        return;
-      }
-
       const map = this.node.getChildByName("map");
       const pointOnMap = map.convertToNodeSpace(point);
-      const discretePoint = this.getNearlyPosition(pointOnMap, FLOOR_SPAN);
-      const floor = this.getfloor(discretePoint);
-      if (floor) {
-        const children = floor.getChildren().reverse();
+      const discretePoint = this.getNearlyPosition(pointOnMap, TILE_SPAN);
+      const tile = this.getTile(discretePoint);
+      if (tile) {
+        const children = tile.getChildren().reverse();
         if (children.length > 0) {
           children[0].removeFromParent();
           this.save();
           return;
         }
-        floor.removeFromParent();
+        tile.removeFromParent();
         this.save();
       }
     },
@@ -505,14 +438,14 @@ cc.Class({
       }, this);
     },
 
-    showDetailFloor(point) {
+    showDetailTile(point) {
       const map = this.node.getChildByName("map");
       const pointOnMap = map.convertToNodeSpace(point);
-      const discretePoint = this.getNearlyPosition(pointOnMap, FLOOR_SPAN);
-      const floor = this.getfloor(discretePoint);
+      const discretePoint = this.getNearlyPosition(pointOnMap, TILE_SPAN);
+      const tile = this.getTile(discretePoint);
 
-      if (floor) {
-        this.showDetailView(floor, false);
+      if (tile) {
+        this.showDetailView(tile, false);
       }
     },
 
@@ -530,7 +463,7 @@ cc.Class({
           return;
         }
 
-        this.showDetailFloor(event.getLocation());
+        this.showDetailTile(event.getLocation());
       }, this);
     },
 
@@ -547,45 +480,36 @@ cc.Class({
       cc.sys.localStorage.setItem(this._fileName, json);
     },
 
-    getPrefabByType(type) {
-      switch (type) {
-        case Type.FLOOR:
-          return this.floorPrefab;
-        case Type.WALL:
-          return this.wallPrefab;
-        case Type.ENEMY:
-          return this.enemyPrefab;
-        case Type.ITEM:
-          return this.itemPrefab;
-        case Type.STAIRS:
-          return this.stairsPrefab;
-        case Type.TRAP:
-          return this.trapPrefab;
-      }
-      
-      return null;
-    },
-
     convertMap(saveData) {
-      const addChildren = (parent, children) => {
+      const addChildren = (parent, children, isResize = false) => {
         for (let i = 0; i < children.length; i++) {
           parent.addChild(children[i]);
-          if (children[i].type != Type.FLOOR && children[i].type != Type.WALL) {
+          if (isResize) {
             const size = children[i].getContentSize();
             children[i].setContentSize(size.width * Math.pow(1 / 2, i), size.height * Math.pow(1 / 2, i));
           }
         }
       };
 
-      const mapFunc = (data) => {
-        const prefab = this.getPrefabByType(data.type);
-        const node = cc.instantiate(prefab);
+      const setData = (node, data) => {
         node.interId = data.id;
         node.type = data.type;
         node.position = data.position;
-        node.angle = data.angle;
-        const children = data.children.map(mapFunc);
-        addChildren(node, children);
+      };
+
+      const eventObjectMapFunc = (data) => {
+        const node = this.instantiateEventObject(data.type);
+        setData(node, data);
+        const children = data.children.map(eventObjectMapFunc);
+        addChildren(node, children, true);
+        return node;
+      };
+
+      const mapFunc = (data) => {
+        const node = this.instantiateTile(data.type);
+        setData(node, data);
+        const children = data.children.map(eventObjectMapFunc);
+        addChildren(node, children, true);
         return node;
       };
 
@@ -632,30 +556,23 @@ cc.Class({
       }
     },
 
-    createDetailPanel(node) {
+    createDetailPanel(node, isTile = false) {
       const detailPanel = cc.instantiate(this.detailPanelPrefab);
       
-      const typePrefab = this.getPrefabByType(node.type);
-      const typeNode = cc.instantiate(typePrefab);
+      const typeNode = isTile ? this.instantiateTile(node.type) : this.instantiateEventObject(node.type);
       typeNode.position = cc.v2(0, 0);
       detailPanel.getChildByName("type").addChild(typeNode);
-      detailPanel.getChildByName("nameLabel").getComponent(cc.Label).string = typePrefab.data.name;
+      detailPanel.getChildByName("nameLabel").getComponent(cc.Label).string = typeNode.name;
       detailPanel.targetNode = node;
 
-      const idNode = detailPanel.getChildByName("id");
       const idEditBox = detailPanel.getChildByName("id").getChildByName("idEditBox");
       idEditBox.getComponent(cc.EditBox).string = node.interId === undefined ? -1 : node.interId;
-      idNode.active = node.type != Type.FLOOR;
 
       return detailPanel;
     },
 
     showDetailView(node, cannotAction = true) {
       const children = node.getChildren();
-      if (children.length <= 0) {
-        return;
-      }
-
       const mark = this.node.getChildByName("mark");
       mark.active = true;
       mark.position = node.position.add(node.parent.position);
@@ -665,13 +582,13 @@ cc.Class({
       const content = detailView.getComponent(cc.ScrollView).content;
       content.removeAllChildren();
 
-      let detailPanel = this.createDetailPanel(node);
+      let detailPanel = this.createDetailPanel(node, true);
       detailPanel.position = cc.v2(0, -20);
       content.addChild(detailPanel);
 
       for (let i = 0; i < children.length; i++) {
         detailPanel = this.createDetailPanel(children[i]);
-        detailPanel.position = cc.v2(0, -i * (detailPanel.height + 10) - 20);
+        detailPanel.position = cc.v2(0, -(i + 1) * (detailPanel.height + 10) - 20);
         content.addChild(detailPanel);
       }
 
