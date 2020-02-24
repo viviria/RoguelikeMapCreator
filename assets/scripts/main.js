@@ -254,7 +254,7 @@ cc.Class({
       const pointOnMap = map.convertToNodeSpace(point);
       const discretePoint = this.getNearlyPosition(pointOnMap, TILE_SPAN);
       const tile = this.getTile(discretePoint);
-      if (!tile) {
+      if (!tile || tile.type == TileType.WALL) {
         return;
       }
 
