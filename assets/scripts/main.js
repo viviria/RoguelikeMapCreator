@@ -431,6 +431,7 @@ cc.Class({
     subUIDisabled() {
       this.node.getChildByName("saveWindow").active = false;
       this.node.getChildByName("positionResetButton").active = false;
+      this.node.getChildByName("tileTypeView").active = false;
       
       this.closeDetailView();
     },
