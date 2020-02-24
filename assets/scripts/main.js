@@ -2,6 +2,7 @@ const TileType = cc.Enum({
   FLOOR: 0,
   WALL: 1,
   WATER: 2,
+  NUM: 3,
 });
 
 const EventObjectType = cc.Enum({
@@ -41,6 +42,11 @@ cc.Class({
         default: null,
       },
 
+      waterPrefab: {
+        type: cc.Prefab,
+        default: null,
+      },
+
       enemyPrefab: {
         type: cc.Prefab,
         default: null,
@@ -62,6 +68,11 @@ cc.Class({
       },
 
       detailPanelPrefab: {
+        type: cc.Prefab,
+        default: null,
+      },
+
+      tileTypePanelPrefab: {
         type: cc.Prefab,
         default: null,
       },
@@ -178,6 +189,63 @@ cc.Class({
           this.save();
         }
       );
+      
+      this.createTileTypeView();
+    },
+
+    getTileTypeName(tileType) {
+      switch (tileType) {
+        case TileType.FLOOR:
+          return "floor";
+        case TileType.WALL:
+          return "wall";
+        case TileType.WATER:
+          return "water";
+      }
+      return "";
+    },
+
+    onTapSetTileType(event, data) {
+      const tileType = Number(data);
+      this._tileType = tileType;
+    },
+
+    instantiateTileTypePanel(tileType) {
+      const node = cc.instantiate(this.tileTypePanelPrefab);
+      node.getChildByName("typeLabel").getComponent(cc.Label).string = "type: " + tileType;
+      node.getChildByName("name").getComponent(cc.Label).string = this.getTileTypeName(tileType);
+
+      const typeNode = this.instantiateTile(tileType);
+      typeNode.position = cc.v2(0, 0);
+      node.getChildByName("type").addChild(typeNode);
+
+      const button = node.getComponent(cc.Button);
+      const clickEvent = new cc.Component.EventHandler();
+      clickEvent.target = this.node;
+      clickEvent.customEventData = tileType;
+      clickEvent.handler = "onTapSetTileType";
+      clickEvent.component = this.node.parent.name;
+      button.clickEvents.push(clickEvent);
+
+      return node;
+    },
+
+    createTileTypeView() {
+      const tileTypeView = this.node.getChildByName("tileTypeView");
+      tileTypeView.active = true;
+      const content = tileTypeView.getComponent(cc.ScrollView).content;
+      content.removeAllChildren();
+
+      let height = 0;
+      for (let i = 0; i < TileType.NUM; i++) {
+        const panel = this.instantiateTileTypePanel(i);
+        const span = panel.height + 10;
+        height += span;
+        panel.position = cc.v2(0, -i * span - 20);
+        content.addChild(panel);
+      }
+
+      content.height = height + 40;
     },
 
     changeEventObjectMode(eventObjectType) {
@@ -253,6 +321,8 @@ cc.Class({
           return cc.instantiate(this.floorPrefab);
         case TileType.WALL:
           return cc.instantiate(this.wallPrefab);
+        case TileType.WATER:
+          return cc.instantiate(this.waterPrefab);
       }
       return null;
     },
@@ -280,38 +350,6 @@ cc.Class({
         }
       }
       return null;
-    },
-
-    onTapChangeWallMode() {
-      if (this._cannotAction) {
-        return;
-      }
-
-      this.node.targetOff(this);
-      this.subUIDisabled();
-      this.setStateLabel("wall");
-
-      this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
-        if (this._cannotAction) {
-          return;
-        }
-        this._isTouch = true;
-        this.generateTile(event.getLocation(), TileType.WALL);
-      }, this);
-
-      this.node.on(cc.Node.EventType.TOUCH_MOVE, (event) => {
-        if (this._isTouch) {
-          this.generateTile(event.getLocation(), TileType.WALL);
-        }
-      }, this);
-
-      const touchEnd = (event) => {
-        this._isTouch = false;
-        this.save();
-      }
-
-      this.node.on(cc.Node.EventType.TOUCH_END, touchEnd, this);
-      this.node.on(cc.Node.EventType.TOUCH_CANCEL, touchEnd, this);
     },
 
     isAlreadyPutTypeOnTile(tile, types) {
