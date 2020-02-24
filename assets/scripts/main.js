@@ -141,6 +141,7 @@ cc.Class({
         case Mode.ENEMY:
           this.setStateLabel("enemy");
           this.changeEventObjectMode(EventObjectType.ENEMY);
+          break;
         case Mode.ITEM:
           this.setStateLabel("item");
           this.changeEventObjectMode(EventObjectType.ITEM);
